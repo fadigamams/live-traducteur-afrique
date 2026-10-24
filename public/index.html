@@ -71,7 +71,7 @@ h2{font-size:1.1rem;margin:0 0 6px}
 <button class="mic" id="mc" style="width:100%;margin-bottom:10px;background:var(--bg);color:var(--ink);border:2px solid var(--acc)">🎧 Écoute continue<small>Conversation en direct, sans appuyer à chaque phrase</small></button>
 <div id="cbar" hidden><div class="row" style="align-items:center;margin-bottom:8px"><b id="cb" style="flex:1"></b><button class="ic" id="cf" aria-label="Changer de sens">⇄</button></div><label class="au" style="margin:0 0 10px"><input type="checkbox" id="alt" checked> Alterner le sens à chaque phrase (chacun son tour)</label></div>
 <div class="row"><button class="mic" id="ma">🎤 Moi<small id="na"></small></button><button class="mic" id="mb">🎤 Lui / Elle<small id="nb"></small></button></div>
-<div class="tx"><input id="tx" placeholder="Ou écris ici…" aria-label="Texte à traduire"><button id="sa" aria-label="Traduire de ma langue vers la sienne">→</button><button id="sb" aria-label="Traduire de sa langue vers la mienne">←</button></div>
+<div class="tx" style="flex-wrap:wrap"><input id="tx" placeholder="Ou écris ici…" aria-label="Texte à traduire" style="flex:1 1 100%"><button id="sa" style="flex:1;padding:12px 6px;font-size:.82rem" aria-label="Traduire de ma langue vers la sienne">→</button><button id="sb" style="flex:1;padding:12px 6px;font-size:.82rem" aria-label="Traduire de sa langue vers la mienne">←</button></div>
 <label class="au"><input type="checkbox" id="au" checked> Lire la traduction à voix haute</label>
 </footer>
 </section>
@@ -149,7 +149,7 @@ function toast(t){var o=$("toast");o.textContent=t;o.className="on";clearTimeout
 function ld(k,d){try{var v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}}
 function sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){toast("Stockage de l’appareil indisponible ou plein");return false}}
 function nz(s){return String(s||"").normalize("NFC").trim().replace(/\s+/g," ").toLocaleLowerCase("fr")}
-function nk(s){return nz(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[’‘`]/g,"'").replace(/[.!?…,;:]+$/,"")}
+function nk(s){return nz(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[’‘`]/g,"'").replace(/\s*[.!?…,;:]+$/,"")}
 var CUSTOM=ld("lt_langs",[]);
 function allLangs(){return BASE.concat(CUSTOM.map(function(c){return [c.code,c.code,c.name,""]}))}
 function L(c){var a=allLangs();for(var i=0;i<a.length;i++)if(a[i][1]===c)return a[i];return a[0]}
@@ -158,7 +158,7 @@ function can(l,k){return l[3].indexOf(k)>=0}
 var A="fr",B="dyu",ss=ld("lt2",null);if(ss){A=ss[0];B=ss[1]}
 function fill(sel,val){sel.innerHTML="";allLangs().forEach(function(l){var o=document.createElement("option");o.value=l[1];o.textContent=lbl(l);sel.appendChild(o)});sel.value=val}
 function refreshSel(){fill($("la"),A);fill($("lb"),B);fill($("dictLang"),$("dictLang").getAttribute("data-v")||"nouchi");fill($("dictTarget"),$("dictTarget").getAttribute("data-v")||"fr");lab()}
-function lab(){$("na").textContent=L(A)[2];$("nb").textContent=L(B)[2];sv("lt2",[A,B])}
+function lab(){$("na").textContent=L(A)[2];$("nb").textContent=L(B)[2];$("sa").textContent=L(A)[2].split(" (")[0]+" → "+L(B)[2].split(" (")[0];$("sb").textContent=L(B)[2].split(" (")[0]+" → "+L(A)[2].split(" (")[0];sv("lt2",[A,B])}
 $("la").onchange=function(){A=this.value;lab()};$("lb").onchange=function(){B=this.value;lab()};
 $("sw").onclick=function(){var t=A;A=B;B=t;$("la").value=A;$("lb").value=B;lab()};
 $("dictLang").onchange=function(){this.setAttribute("data-v",this.value)};$("dictTarget").onchange=function(){this.setAttribute("data-v",this.value)};
@@ -383,7 +383,7 @@ $("hc").onclick=function(){if(!hist.length||!confirm("Effacer l’historique de 
 async function go(side,txt,el){
  var f=L(side=="a"?A:B),t=L(side=="a"?B:A);
  el.classList.remove("live");el.querySelector(".o").textContent=txt;el.querySelector(".t").textContent="…";
- try{var r=await tr(txt,f,t),o=r.text;el.querySelector(".t").textContent=o;
+ try{var r;try{r=await tr(txt,f,t)}catch(e0){if(e0.message==="NOMT"){try{r=await tr(txt,t,f);r.src=(r.src?r.src+" · ":"")+"↔ Sens inversé automatiquement : "+t[2].split(" (")[0]+" → "+f[2].split(" (")[0];var sw=f;f=t;t=sw}catch(e1){throw e0}}else throw e0}var o=r.text;el.querySelector(".t").textContent=o;
   if(r.src){var s=document.createElement("div");s.className="src";s.textContent=r.src;el.appendChild(s)}
   var b=document.createElement("button");b.className="sp";b.textContent="🔊";b.setAttribute("aria-label","Écouter");b.onclick=function(){speak(o,t)};el.appendChild(b);
   hist.push({s:side,o:txt,t:o,src:r.src});hist=hist.slice(-60);sv(HK,hist);

@@ -16,7 +16,7 @@ function safeEq(a, b) { const x = Buffer.from(a), y = Buffer.from(b); return x.l
 const isAdmin = q => ADMIN.length >= 12 && !!q.get("x-admin-key") && safeEq(q.get("x-admin-key"), ADMIN);
 const need = (q, s, n) => isAdmin(q) ? n() : s.status(401).json({ error: "Clé modérateur requise" });
 const clean = (v, m) => String(v == null ? "" : v).replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, m);
-const nk = s => clean(s, 300).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[’‘`]/g, "'").replace(/[.!?…,;:]+$/, "");
+const nk = s => clean(s, 300).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[’‘`]/g, "'").replace(/\s*[.!?…,;:]+$/, "");
 const fail = (s, e) => { console.error(e); s.status(500).json({ error: "Erreur serveur" }); };
 
 const INIT = `
@@ -82,7 +82,7 @@ app.delete("/api/entries/:id", need, async (q, s) => { // suppression douce : r�
   try { await pool.query("update entries set status='supprimé', updated_at=now() where id=$1", [q.params.id]); s.json({ ok: true }); } catch (e) { fail(s, e); }
 });
 
-app.use(express.static(path.join(__dirname, "public"), { maxAge: "5m" }));
+app.use(express.static(path.join(__dirname, "public"), { maxAge: 0 }));
 const port = process.env.PORT || 3000;
 pool.query(INIT).then(() => app.listen(port, () => console.log("Live Traducteur Afrique sur le port " + port)))
   .catch(e => { console.error("Base de données inaccessible :", e.message); process.exit(1); });
