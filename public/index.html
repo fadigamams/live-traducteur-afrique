@@ -149,7 +149,7 @@ function toast(t){var o=$("toast");o.textContent=t;o.className="on";clearTimeout
 function ld(k,d){try{var v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}}
 function sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){toast("Stockage de l’appareil indisponible ou plein");return false}}
 function nz(s){return String(s||"").normalize("NFC").trim().replace(/\s+/g," ").toLocaleLowerCase("fr")}
-function nk(s){return nz(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[’‘`]/g,"'").replace(/\s*[.!?…,;:]+$/,"")}
+function nk(s){return nz(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[’‘`'´]/g,"").replace(/[^\p{L}\p{N}]+/gu," ").trim()}
 var CUSTOM=ld("lt_langs",[]);
 function allLangs(){return BASE.concat(CUSTOM.map(function(c){return [c.code,c.code,c.name,""]}))}
 function L(c){var a=allLangs();for(var i=0;i<a.length;i++)if(a[i][1]===c)return a[i];return a[0]}
@@ -260,7 +260,7 @@ function dictHints(txt,f,t){var P=pad(txt),out=[];
   if(w&&P.indexOf(pad(w))>=0&&P!==pad(w))out.push("« "+w+" » = "+m+(x.status==="validé"?"":" (non validé)"))});
  return out}
 var FOOD="riz,attieke,placali,foutou,sauce,pain,viande,poisson,poulet,igname,banane,aloco,garba,kedjenou,soupe,mais,haricot,pate,pates,fruit,mangue,orange,manioc,nourriture,repas,gateau,bonbon,pizza,spaghetti,oeuf,oeufs,legume,legumes,tomate,oignon,arachide,sucre".split(","),
- PERS="lui,elle,quelqu'un,gars,homme,femme,enfant,frere,ami,mec,voleur,gamin,eleve,fille,garcon,patron,monsieur,madame,personne".split(",");
+ PERS="lui,elle,quelquun,gars,homme,femme,enfant,frere,ami,mec,voleur,gamin,eleve,fille,garcon,patron,monsieur,madame,personne".split(",");
 function cueList(c){var o=[];String(c||"").split(/[,;]/).forEach(function(w){var k=nk(w);if(!k)return;o.push(k);if(k==="nourriture")o=o.concat(FOOD);if(k==="personne")o=o.concat(PERS)});return o}
 function choose(c,ctx){
  var u=[];c.forEach(function(x){if(!u.some(function(y){return nk(y.d)===nk(x.d)}))u.push(x)});
