@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"><title>Live Traducteur Afrique</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#0b1b33;--card:#13294b;--ink:#f1f6ff;--mut:#9db3d6;--acc:#2ee6d0;--accink:#06222b;--b:#ffb84d;--line:#24406b;--ok:#4ade80;--ko:#ff7a7a}
+@media (prefers-color-scheme:light){:root{--bg:#eaf3fb;--card:#fff;--ink:#0b1b33;--mut:#51668a;--acc:#0aa89a;--accink:#fff;--b:#c9770a;--line:#c9d8ea;--ok:#15803d;--ko:#c02626}}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column;max-width:640px;margin:0 auto;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav{display:flex;gap:6px;padding:8px 12px 0}
+nav button{flex:1;font:inherit;font-weight:700;font-size:.85rem;padding:10px 4px;border:1px solid var(--line);border-bottom:0;border-radius:12px 12px 0 0;background:var(--card);color:var(--mut);cursor:pointer}
+nav button[aria-selected=true]{background:var(--acc);color:var(--accink);border-color:var(--acc)}
+.view{display:none;flex:1;min-height:0;flex-direction:column;border-top:2px solid var(--acc)}.view.on{display:flex}
+.scroll{flex:1;overflow-y:auto;padding:12px}
+header{display:flex;gap:8px;align-items:center;padding:12px}
+select,input,textarea{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;width:100%;min-width:0}
+header select{flex:1}
+textarea{min-height:60px;resize:vertical}
+.ic{flex:none;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:1.2rem;cursor:pointer}
+#chat{flex:1;overflow-y:auto;padding:8px 12px;display:flex;flex-direction:column;gap:10px}
+.empty{margin:auto;text-align:center;color:var(--mut);padding:20px}
+.m{max-width:85%;padding:10px 12px;border-radius:16px;background:var(--card);border:1px solid var(--line)}
+.m.a{align-self:flex-end;border-bottom-right-radius:4px;border-color:var(--acc)}
+.m.b{align-self:flex-start;border-bottom-left-radius:4px;border-color:var(--b)}
+.o{font-size:.85rem;color:var(--mut)}.t{font-size:1.2rem;font-weight:600;margin-top:2px}
+.src{font-size:.78rem;color:var(--b);margin-top:2px}
+.sp{background:none;border:0;color:var(--mut);cursor:pointer;font-size:1.1rem;padding:4px 0 0}
+.live .o{font-style:italic}
+footer{padding:10px 12px 12px;background:var(--card);border-top:1px solid var(--line)}
+.row{display:flex;gap:10px}
+.mic{flex:1;border:0;border-radius:16px;padding:16px 8px;font:inherit;font-weight:700;font-size:1rem;cursor:pointer;color:var(--accink)}
+.mic small{display:block;font-weight:400;opacity:.85}
+#ma{background:var(--acc)}#mb{background:var(--b);color:#1b1200}
+.mic.rec{animation:p 1s infinite}@keyframes p{50%{transform:scale(.96);box-shadow:0 0 0 6px rgba(255,80,80,.45)}}
+@media (prefers-reduced-motion:reduce){.mic.rec{animation:none;outline:3px solid #ff5050}}
+.tx{display:flex;gap:6px;margin-top:10px}
+.tx button{font:inherit;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:0 12px;cursor:pointer}
+label.au{display:flex;align-items:center;gap:6px;color:var(--mut);font-size:.9rem;margin-top:8px}
+label.au input{width:auto}
+button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+#toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:20px;font-size:.9rem;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90%;text-align:center;z-index:9}
+#toast.on{opacity:1}
+h2{font-size:1.1rem;margin:0 0 6px}
+.note{font-size:.82rem;color:var(--mut);margin:6px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.full{grid-column:1/-1}
+.btn{width:100%;font:inherit;font-weight:700;background:var(--acc);color:var(--accink);border:0;border-radius:10px;padding:12px;cursor:pointer;margin-top:8px}
+.btn2{font:inherit;font-size:.85rem;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:6px 10px;cursor:pointer;margin:6px 6px 0 0}
+.entry{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px;margin-top:8px;font-size:.92rem}
+.entry b{font-size:1.05rem}
+.st{display:inline-block;font-size:.75rem;border-radius:20px;padding:1px 8px;border:1px solid var(--line);margin-left:4px}
+.st.validé{color:var(--ok);border-color:var(--ok)}.st.refusé,.st.à-corriger{color:var(--ko);border-color:var(--ko)}.st.en-attente{color:var(--b);border-color:var(--b)}
+.fx{color:var(--b);font-size:.85rem;margin-top:4px}
+</style></head><body>
+<nav role="tablist" aria-label="Rubriques">
+ <button role="tab" id="tb-c" data-v="vc" aria-selected="true">🎙️ Causerie</button>
+ <button role="tab" id="tb-e" data-v="ve" aria-selected="false">🌍 Équipédia</button>
+ <button role="tab" id="tb-l" data-v="vl" aria-selected="false">➕ Langue ajouter</button>
+</nav>
+
+<!-- A. CAUSERIE -->
+<section class="view on" id="vc">
+<header><select id="la" aria-label="Ma langue"></select><button class="ic" id="sw" aria-label="Inverser les langues">⇄</button><select id="lb" aria-label="Langue de l’interlocuteur"></select><button class="ic" id="hc" aria-label="Effacer l’historique">🗑</button></header>
+<div id="chat"><div class="empty" id="em">Appuie sur ton micro et parle : la traduction s’affiche et est lue à voix haute. Ton interlocuteur répond avec l’autre micro. Si le micro ne marche pas, écris le texte en bas.</div></div>
+<footer>
+<button class="mic" id="mc" style="width:100%;margin-bottom:10px;background:var(--bg);color:var(--ink);border:2px solid var(--acc)">🎧 Écoute continue<small>Conversation en direct, sans appuyer à chaque phrase</small></button>
+<div id="cbar" hidden><div class="row" style="align-items:center;margin-bottom:8px"><b id="cb" style="flex:1"></b><button class="ic" id="cf" aria-label="Changer de sens">⇄</button></div><label class="au" style="margin:0 0 10px"><input type="checkbox" id="alt" checked> Alterner le sens à chaque phrase (chacun son tour)</label></div>
+<div class="row"><button class="mic" id="ma">🎤 Moi<small id="na"></small></button><button class="mic" id="mb">🎤 Lui / Elle<small id="nb"></small></button></div>
+<div class="tx"><input id="tx" placeholder="Ou écris ici…" aria-label="Texte à traduire"><button id="sa" aria-label="Traduire de ma langue vers la sienne">→</button><button id="sb" aria-label="Traduire de sa langue vers la mienne">←</button></div>
+<label class="au"><input type="checkbox" id="au" checked> Lire la traduction à voix haute</label>
+</footer>
+</section>
+
+<!-- B. EQUIPEDIA -->
+<section class="view" id="ve"><div class="scroll">
+ <h2>🌍 Équipédia — dictionnaire communautaire</h2>
+ <p class="note">Mots et expressions des langues africaines et du nouchi, enrichis par la communauté.</p><p class="note" id="net"></p>
+ <div class="grid">
+  <select id="dictLang" aria-label="Langue du mot"></select>
+  <select id="dictTarget" aria-label="Langue de la traduction"></select>
+  <input id="dictWord" class="full" placeholder="Mot ou expression (ex. dohi)" aria-label="Mot ou expression">
+  <input id="dictMeaning" class="full" placeholder="Traduction / signification (ex. c’est un mensonge)" aria-label="Traduction">
+  <input id="dictExample" class="full" placeholder="Exemple de phrase (facultatif)" aria-label="Exemple">
+  <input id="dictCtx" placeholder="Contexte / sens (facultatif)" aria-label="Contexte">
+  <input id="dictPron" placeholder="Prononciation (facultatif)" aria-label="Prononciation">
+  <input id="dictReg" placeholder="Région d’usage (facultatif)" aria-label="Région">
+  <input id="dictVar" placeholder="Variantes d’écriture (facultatif)" aria-label="Variantes">
+  <input id="dictCue" class="full" placeholder="Indices de sens (ex. nourriture, riz) — ou écris la traduction ainsi : manger (nourriture) / frapper (personne)" aria-label="Indices de sens">
+  <textarea id="dictOther" class="full" placeholder="Autres langues, une par ligne. Ex. :&#10;Anglais: it’s a lie" aria-label="Traductions dans d’autres langues"></textarea>
+ </div>
+ <button class="btn" id="dictAdd">Ajouter</button>
+ <p class="note">Chaque contribution reste « en attente » jusqu’à validation par une personne compétente. Ta définition n’est jamais modifiée sans ton accord.</p>
+ <hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
+ <div class="grid"><input id="dictQ" placeholder="🔎 Rechercher un mot…" aria-label="Rechercher"><select id="dictF" aria-label="Filtrer par statut"><option value="">Tous les statuts</option><option>en attente</option><option>validé</option><option>à corriger</option><option>refusé</option><option>supprimé</option></select></div>
+ <label class="au"><input type="checkbox" id="vmode"> Mode modérateur (clé secrète, en ligne)</label>
+ <div id="dictEntries" aria-live="polite"></div>
+ <button class="btn2" id="dx">⬇ Sauvegarder (fichier)</button><button class="btn2" id="dtr" hidden>↩ Restaurer le dernier supprimé</button><button class="btn2" id="di">⬆ Restaurer</button><input type="file" id="dif" accept=".json,application/json" hidden>
+</div></section>
+
+<!-- C. LANGUE AJOUTER -->
+<section class="view" id="vl"><div class="scroll">
+ <h2>➕ Ajouter une langue</h2>
+ <p class="note">Une langue ajoutée apparaît dans les menus, mais <b>la traduction automatique n’est pas activée pour autant</b> : seul le dictionnaire Équipédia est utilisé pour elle, tant qu’aucun moteur ne la prend en charge.</p>
+ <div class="grid">
+  <input id="lgName" class="full" placeholder="Nom de la langue *" aria-label="Nom de la langue">
+  <input id="lgAlt" placeholder="Nom alternatif / variantes" aria-label="Variantes">
+  <input id="lgReg" placeholder="Région ou pays" aria-label="Région ou pays">
+  <input id="lgCode" class="full" placeholder="Code linguistique, s’il existe (ex. dyu)" aria-label="Code linguistique">
+  <textarea id="lgDesc" class="full" placeholder="Description (facultatif)" aria-label="Description"></textarea>
+ </div>
+ <button class="btn" id="lgAdd">Ajouter cette langue</button>
+ <div id="lgList"></div>
+ <h2 style="margin-top:18px">Pour rendre une langue traduisible</h2>
+ <p class="note">1) Collecter des mots dans Équipédia, validés par des locuteurs. 2) Choisir un moteur qui supporte la langue (ou entraîner un modèle sur ces données). 3) Mettre un petit serveur (clé API gardée côté serveur, jamais dans ce fichier) et une base partagée. 4) Seulement ensuite, activer la langue comme « traduisible ».</p>
+</div></section>
+<div id="toast" role="status"></div>
+<script>
+// caps : m = traduction automatique tentée, s = reconnaissance vocale, v = voix de lecture
+var BASE=[
+["fr-FR","fr","Français","msv"],["en-US","en","English","msv"],["es-ES","es","Español","msv"],["pt-PT","pt","Português","msv"],["ar-SA","ar","العربية","msv"],["de-DE","de","Deutsch","msv"],["it-IT","it","Italiano","msv"],["zh-CN","zh","中文","msv"],["sw-KE","sw","Kiswahili","ms"],
+["dyu","dyu","Dioula","" ],["mxx","mxx","Mahouka (Mahou)",""],["bci","bci","Baoulé",""],["bet","bet","Bété",""],["any","any","Agni",""],["sef","sef","Sénoufo (variété à préciser)",""],["wec","wec","Guéré",""],["nouchi","nouchi","Nouchi (jargon ivoirien)",""],
+["ha","ha","Haoussa","m"],["yo","yo","Yorùbá","m"],["bm","bm","Bambara",""],["mos","mos","Mooré",""],["wo","wo","Wolof","m"],["ff","ff","Fulfuldé",""],["ln","ln","Lingala","m"],["ee","ee","Éwé",""],["ig","ig","Igbo","m"],["ak","ak","Akan",""]
+];
+var $=function(i){return document.getElementById(i)};
+function toast(t){var o=$("toast");o.textContent=t;o.className="on";clearTimeout(toast.h);toast.h=setTimeout(function(){o.className=""},3200)}
+function ld(k,d){try{var v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}}
+function sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){toast("Stockage de l’appareil indisponible ou plein");return false}}
+function nz(s){return String(s||"").normalize("NFC").trim().replace(/\s+/g," ").toLocaleLowerCase("fr")}
+function nk(s){return nz(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[’‘`]/g,"'").replace(/[.!?…,;:]+$/,"")}
+var CUSTOM=ld("lt_langs",[]);
+function allLangs(){return BASE.concat(CUSTOM.map(function(c){return [c.code,c.code,c.name,""]}))}
+function L(c){var a=allLangs();for(var i=0;i<a.length;i++)if(a[i][1]===c)return a[i];return a[0]}
+function lbl(l){return l[2]+(l[3].indexOf("m")<0?" (dictionnaire)":"")}
+function can(l,k){return l[3].indexOf(k)>=0}
+var A="fr",B="dyu",ss=ld("lt2",null);if(ss){A=ss[0];B=ss[1]}
+function fill(sel,val){sel.innerHTML="";allLangs().forEach(function(l){var o=document.createElement("option");o.value=l[1];o.textContent=lbl(l);sel.appendChild(o)});sel.value=val}
+function refreshSel(){fill($("la"),A);fill($("lb"),B);fill($("dictLang"),$("dictLang").getAttribute("data-v")||"nouchi");fill($("dictTarget"),$("dictTarget").getAttribute("data-v")||"fr");lab()}
+function lab(){$("na").textContent=L(A)[2];$("nb").textContent=L(B)[2];sv("lt2",[A,B])}
+$("la").onchange=function(){A=this.value;lab()};$("lb").onchange=function(){B=this.value;lab()};
+$("sw").onclick=function(){var t=A;A=B;B=t;$("la").value=A;$("lb").value=B;lab()};
+$("dictLang").onchange=function(){this.setAttribute("data-v",this.value)};$("dictTarget").onchange=function(){this.setAttribute("data-v",this.value)};
+
+// ---------- Menus ----------
+document.querySelectorAll("nav button").forEach(function(b){b.onclick=function(){
+ document.querySelectorAll("nav button").forEach(function(x){x.setAttribute("aria-selected",x===b)});
+ document.querySelectorAll(".view").forEach(function(v){v.classList.toggle("on",v.id===b.getAttribute("data-v"))});
+ if(b.getAttribute("data-v")!=="vc"){if(cont)cstop();if(cur)try{cur.stop()}catch(e){}}}});
+
+// ---------- Équipédia : stockage ----------
+var DK="lt_dict_v2",OLD="livetraducteur_community_dictionary_v1";
+function getRaw(){return ld(DK,[])}
+function getDict(){return getRaw().filter(function(x){return x.status!=="supprimé"})}
+function saveDict(x){return sv(DK,x)}
+(function migrate(){if(localStorage.getItem(DK)!==null)return;var old=ld(OLD,[]);if(!old.length)return;
+ var fix={dy:"dyu",guéré:"wec"};
+ saveDict(old.map(function(x,i){return {id:"old"+i+"_"+Date.parse(x.createdAt||0),word:x.word,lang:fix[x.langCode]||x.langCode,meaning:x.meaning,target:fix[x.targetCode]||x.targetCode,example:x.example||"",ctx:"",pron:"",region:"",variants:"",others:"",status:"en attente",createdAt:x.createdAt,updatedAt:x.createdAt,fixes:[],reports:0,local:true}}))})();
+function stKey(s){return s.replace(" ","-")}
+function addEntry(e){
+ var w=nz(e.word),m=nz(e.meaning);
+ if(!w||!m){toast("Renseigne le mot et sa traduction");return false}
+ if(e.lang===e.target){toast("Choisis deux langues différentes");return false}
+ var items=getDict(),dup=items.filter(function(x){return nk(x.word)===nk(w)&&x.lang===e.lang&&x.target===e.target&&nk(x.meaning)===nk(m)&&x.status!=="refusé"});
+ if(dup.length){toast("Ce mot avec ce sens existe déjà");return false}
+ var other=items.some(function(x){return nk(x.word)===nk(w)&&x.lang===e.lang&&x.target===e.target});
+ var now=new Date().toISOString();
+ items.push({id:"e"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),word:e.word.trim().replace(/\s+/g," "),lang:e.lang,meaning:e.meaning.trim().replace(/\s+/g," "),target:e.target,example:e.example||"",cues:e.cues||"",ctx:e.ctx||"",pron:e.pron||"",region:e.region||"",variants:e.variants||"",others:e.others||"",status:"en attente",createdAt:now,updatedAt:now,fixes:[],reports:0,local:true});
+ if(!saveDict(items))return false;
+ toast(other?"Enregistré (autre sens du même mot)":"✔ Enregistré dans Équipédia");syncNow();return true}
+$("dictAdd").onclick=function(){
+ var ok=addEntry({word:$("dictWord").value,meaning:$("dictMeaning").value,lang:$("dictLang").value,target:$("dictTarget").value,example:$("dictExample").value.trim(),ctx:$("dictCtx").value.trim(),cues:$("dictCue").value.trim(),pron:$("dictPron").value.trim(),region:$("dictReg").value.trim(),variants:$("dictVar").value.trim(),others:$("dictOther").value.trim()});
+ if(ok){["dictWord","dictMeaning","dictExample","dictCue","dictCtx","dictPron","dictReg","dictVar","dictOther"].forEach(function(i){$(i).value=""});$("dictQ").value="";$("dictF").value="";renderDict()}};
+function upd(id,fn){var it=getDict();for(var i=0;i<it.length;i++)if(it[i].id===id){fn(it[i]);it[i].updatedAt=new Date().toISOString()}saveDict(it);renderDict()}
+function delEntry(id){var it=getDict(),k=-1;it.forEach(function(x,i){if(x.id===id)k=i});if(k<0)return;var tr0=ld("lt_trash",[]);tr0.push(it[k]);sv("lt_trash",tr0.slice(-30));it.splice(k,1);saveDict(it);renderDict();toast("Supprimé — tu peux le restaurer")}
+function restoreEntry(){var tr0=ld("lt_trash",[]),x=tr0.pop();if(!x)return;var it=getDict();if(!it.some(function(y){return y.id===x.id}))it.push(x);saveDict(it);sv("lt_trash",tr0);renderDict();toast("Mot restauré : "+x.word)}
+function renderDict(){
+ $("dtr").hidden=!ld("lt_trash",[]).length;
+ var box=$("dictEntries"),q=nk($("dictQ").value),f=$("dictF").value,vm=$("vmode").checked&&!!ADMIN;box.innerHTML="";
+ var items=(f==="supprimé"?getRaw():getDict()).slice().reverse().filter(function(x){return(!f||x.status===f)&&(!q||nk(x.word).indexOf(q)>=0||nk(x.meaning).indexOf(q)>=0||nk(x.variants).indexOf(q)>=0)});
+ if(!items.length){var d=document.createElement("div");d.className="entry";d.textContent=getDict().length?"Aucun résultat.":"Aucun mot enregistré pour le moment. Ajoute le premier !";box.appendChild(d);return}
+ items.forEach(function(x){
+  var d=document.createElement("div");d.className="entry";
+  var h=document.createElement("div"),b=document.createElement("b");b.textContent=x.word;h.appendChild(b);
+  h.appendChild(document.createTextNode(" → "+x.meaning));var s=document.createElement("span");s.className="st "+stKey(x.status);s.textContent=x.status;h.appendChild(s);d.appendChild(h);
+  var m=document.createElement("div");m.className="note";
+  m.textContent=L(x.lang)[2]+" → "+L(x.target)[2]+[x.pron&&"prononciation : "+x.pron,x.region&&"région : "+x.region,x.ctx&&"contexte : "+x.ctx,x.cues&&"indices : "+x.cues,x.variants&&"variantes : "+x.variants,x.example&&"exemple : "+x.example,x.others&&"autres langues : "+x.others.replace(/\n/g," ; ")].filter(Boolean).map(function(t){return" · "+t}).join("");
+  d.appendChild(m);
+  (x.fixes||[]).forEach(function(c){var p=document.createElement("div");p.className="fx";p.textContent="✎ Correction proposée : "+c.text;d.appendChild(p)});
+  if(x.reports){var r=document.createElement("div");r.className="fx";r.textContent="⚑ Signalé "+x.reports+" fois";d.appendChild(r)}
+  function bt(t,fn){var k=document.createElement("button");k.className="btn2";k.textContent=t;k.onclick=fn;d.appendChild(k)}
+  bt("✎ Proposer une correction",function(){var t=prompt("Quelle correction proposes-tu pour « "+x.word+" » ?");if(t&&t.trim()){upd(x.id,function(e){e.fixes=(e.fixes||[]).concat([{text:t.trim(),date:new Date().toISOString()}])});queueOp({t:"fix",id:x.id,text:t.trim()})}});
+  bt("⚑ Signaler",function(){upd(x.id,function(e){e.reports=(e.reports||0)+1;if(e.status==="validé")e.status="à corriger"});queueOp({t:"report",id:x.id});toast("Signalement enregistré")});
+  bt("🗑 Supprimer",function(){delClick(x)});
+  if(vm){[["✔ Valider","validé"],["✖ Refuser","refusé"],["⚠ À corriger","à corriger"]].forEach(function(a){bt(a[0],function(){modCall("PATCH","/entries/"+x.id,{status:a[1]})})});if(x.status==="supprimé")bt("↩ Rétablir",function(){modCall("PATCH","/entries/"+x.id,{status:"en attente"})})}
+  box.appendChild(d)})}
+$("dtr").onclick=restoreEntry;$("dictQ").oninput=renderDict;$("dictF").onchange=renderDict;$("vmode").onchange=async function(){var me=this;
+ if(!me.checked){ADMIN="";sessionStorage.removeItem("lt_admin");renderDict();return}
+ var k=prompt("Clé modérateur (secrète) :");if(!k){me.checked=false;return}
+ ADMIN=k;try{await api("GET","/admin/check");sessionStorage.setItem("lt_admin",k);await pull();toast("Mode modérateur activé")}catch(e){ADMIN="";me.checked=false;toast("Clé refusée ou serveur injoignable")}renderDict()};
+$("dx").onclick=function(){var u=URL.createObjectURL(new Blob([JSON.stringify({dict:getDict(),langs:CUSTOM},null,1)],{type:"application/json"})),a=document.createElement("a");a.href=u;a.download="equipedia-sauvegarde.json";a.click();setTimeout(function(){URL.revokeObjectURL(u)},4000)};
+$("di").onclick=function(){$("dif").click()};
+$("dif").onchange=function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var j=JSON.parse(r.result),cur=getDict(),ids={};cur.forEach(function(x){ids[x.id]=1});var n=0;(j.dict||[]).forEach(function(x){if(x&&x.id&&x.word&&!ids[x.id]){x.local=true;cur.push(x);n++}});(j.langs||[]).forEach(function(c){if(c.name&&c.code&&!allLangs().some(function(l){return l[1]===c.code})){CUSTOM.push(c)}});sv("lt_langs",CUSTOM);saveDict(cur);refreshSel();renderDict();renderLangs();syncNow();toast(n+" mot(s) restauré(s)")}catch(e){toast("Fichier de sauvegarde illisible")}};r.readAsText(f);this.value=""};
+
+// ---------- Rubrique : Langue ajouter ----------
+function renderLangs(){var b=$("lgList");b.innerHTML="";CUSTOM.forEach(function(c){var d=document.createElement("div");d.className="entry";d.textContent=c.name+(c.alt?" ("+c.alt+")":"")+" — "+(c.region||"région non précisée")+" · code : "+c.code+" · traduction automatique : non activée";b.appendChild(d)})}
+$("lgAdd").onclick=function(){
+ var name=$("lgName").value.trim().replace(/\s+/g," ");if(!name){toast("Indique le nom de la langue");return}
+ var code=$("lgCode").value.trim().toLowerCase()||("x-"+nk(name).replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""));
+ if(allLangs().some(function(l){return l[1]===code||nk(l[2])===nk(name)})){toast("Cette langue ou ce code existe déjà");return}
+ CUSTOM.push({name:name,alt:$("lgAlt").value.trim(),region:$("lgReg").value.trim(),code:code,desc:$("lgDesc").value.trim(),createdAt:new Date().toISOString()});
+ if(!sv("lt_langs",CUSTOM)){CUSTOM.pop();return}
+ queueOp({t:"lang",lang:CUSTOM[CUSTOM.length-1]});
+ ["lgName","lgAlt","lgReg","lgCode","lgDesc"].forEach(function(i){$(i).value=""});
+ refreshSel();renderLangs();toast("✔ « "+name+" » ajoutée aux menus (dictionnaire seulement)")};
+
+// ---------- Traduction ----------
+var DICT_OFF=null;
+function splitSenses(m){var out=[],cur="",dp=0,s=String(m);
+ for(var i=0;i<s.length;i++){var c=s[i];
+  if(c==="("||c==="[")dp++;else if(c===")"||c==="]")dp=Math.max(0,dp-1);
+  if(!dp&&(c==="/"||c===";")){out.push(cur);cur="";continue}
+  if(!dp&&s.substr(i,4).toLowerCase()===" ou "){out.push(cur);cur="";i+=3;continue}
+  cur+=c}
+ out.push(cur);
+ return out.map(function(z){var mm=z.match(/^(.*?)\s*[(\[]([^)\]]*)[)\]]\s*$/);return mm?{d:mm[1].trim(),cues:mm[2]}:{d:z.trim(),cues:""}}).filter(function(z){return z.d})}
+function senses(x){return /[(\[]/.test(x.meaning)?splitSenses(x.meaning):[{d:x.meaning,cues:""}]}
+function dictFind(txt,f,t){var k=nk(txt),hits=[],rk={"validé":2,"en attente":1};
+ getDict().forEach(function(x){if(x.status==="refusé")return;var r=rk[x.status]||0;
+  if(x.lang===f[1]&&x.target===t[1]&&nk(x.word)===k)senses(x).forEach(function(z){hits.push({text:z.d,r:r})});
+  else if(x.target===f[1]&&x.lang===t[1]&&senses(x).some(function(z){return nk(z.d)===k}))hits.push({text:x.word,r:r})});
+ if(!hits.length)return null;var mr=Math.max.apply(null,hits.map(function(x){return x.r})),tx=[];
+ hits.forEach(function(x){if(x.r===mr&&tx.indexOf(x.text)<0)tx.push(x.text)});
+ return {text:tx[0],alts:tx.slice(1),status:mr===2?"validé":"en attente"}}
+function pad(s){return " "+nk(s).replace(/[^a-z0-9\u0080-\uffff]+/g," ").trim()+" "}
+function dictHints(txt,f,t){var P=pad(txt),out=[];
+ getDict().forEach(function(x){if(x.status==="refusé")return;var w=null,m=null;
+  if(x.lang===f[1]&&x.target===t[1]){w=x.word;m=x.meaning}else if(x.target===f[1]&&x.lang===t[1]){w=x.meaning;m=x.word}
+  if(w&&P.indexOf(pad(w))>=0&&P!==pad(w))out.push("« "+w+" » = "+m+(x.status==="validé"?"":" (non validé)"))});
+ return out}
+var FOOD="riz,attieke,placali,foutou,sauce,pain,viande,poisson,poulet,igname,banane,aloco,garba,kedjenou,soupe,mais,haricot,pate,pates,fruit,mangue,orange,manioc,nourriture,repas,gateau,bonbon,pizza,spaghetti,oeuf,oeufs,legume,legumes,tomate,oignon,arachide,sucre".split(","),
+ PERS="lui,elle,quelqu'un,gars,homme,femme,enfant,frere,ami,mec,voleur,gamin,eleve,fille,garcon,patron,monsieur,madame,personne".split(",");
+function cueList(c){var o=[];String(c||"").split(/[,;]/).forEach(function(w){var k=nk(w);if(!k)return;o.push(k);if(k==="nourriture")o=o.concat(FOOD);if(k==="personne")o=o.concat(PERS)});return o}
+function choose(c,ctx){
+ var u=[];c.forEach(function(x){if(!u.some(function(y){return nk(y.d)===nk(x.d)}))u.push(x)});
+ u.sort(function(a,b){return b.r-a.r});
+ if(u.length===1)return {d:u[0].d};
+ var best=null,tie=false,bs=0;
+ u.forEach(function(x){var s=0;x.cues.forEach(function(q){if(ctx.indexOf(q)>=0)s++});if(s>bs){bs=s;best=x;tie=false}else if(s===bs&&s>0)tie=true});
+ if(best&&!tie)return {d:best.d};
+ return {d:u[0].d,amb:1,alts:u.slice(1).map(function(x){return x.d})}}
+function dictSub(txt,f,t){
+ var pairs={},rk={"validé":2,"en attente":1},maxn=1;
+ function add(s,o){var k=nk(s);(pairs[k]=pairs[k]||[]).push(o);maxn=Math.max(maxn,k.split(" ").length)}
+ getDict().forEach(function(x){if(x.status==="refusé")return;var r=rk[x.status]||0;
+  if(x.lang===f[1]&&x.target===t[1])senses(x).forEach(function(z){add(x.word,{d:z.d,r:r,cues:cueList(z.cues+","+(x.cues||""))})});
+  else if(x.target===f[1]&&x.lang===t[1])senses(x).forEach(function(z){add(z.d,{d:x.word,r:r,cues:[]})})});
+ var tk=String(txt).trim().split(/\s+/),ctx=tk.map(function(w){return nk(w)}),out=[],hit=0,amb=[],i=0;
+ tk.forEach(function(w,ix){if(ix>0&&/^\p{Lu}\p{L}+$/u.test(w))ctx.push("personne")});
+ while(i<tk.length){var cands=null,n;
+  for(n=Math.min(maxn,tk.length-i);n>=1;n--){var p=pairs[nk(tk.slice(i,i+n).join(" "))];if(p){cands=p;break}}
+  if(cands){var pk=choose(cands,ctx);if(pk.amb)amb.push("« "+tk.slice(i,i+n).join(" ")+" » = "+pk.d+" (autre sens : "+pk.alts.join(", ")+")");out.push(pk.d);hit++;i+=n}else{out.push(tk[i]);i++}}
+ var res=[];out.forEach(function(w){if(!res.length||nk(res[res.length-1])!==nk(w))res.push(w)});
+ return {text:res.join(" "),hit:hit,amb:amb}}
+async function mt(txt,f,t){var res=await fetch("https://api.mymemory.translated.net/get?q="+encodeURIComponent(txt)+"&langpair="+f[1]+"|"+t[1]),j=await res.json();
+ if(j&&j.responseStatus==200&&j.responseData&&j.responseData.translatedText)return j.responseData.translatedText;
+ throw new Error("Traduction indisponible")}
+var PART="📖 Équipédia — traduction partielle : seuls les mots du dictionnaire sont remplacés, à vérifier";
+function pm(s){return PART+(s.amb&&s.amb.length?". Sens choisi par défaut : "+s.amb.join(" ; ")+". Ajoute un indice dans Équipédia (nourriture, personne…) pour choisir":"")}
+function stTxt(s){return s==="validé"?"validé":"en attente de validation, non vérifié"}
+async function tr(txt,f,t){
+ var FR=L("fr"),d=dictFind(txt,f,t);
+ if(d)return {text:d.text,src:"📖 Équipédia ("+stTxt(d.status)+")"+(d.alts.length?" — autre sens possible : "+d.alts.join(", "):"")};
+ if(f[1]!=="fr"&&t[1]!=="fr"){
+  var a=dictFind(txt,f,FR),mid=a?a.text:null,partial=false;
+  if(!mid){var s1=dictSub(txt,f,FR);if(s1.hit){mid=s1.text;partial=true}}
+  if(mid){
+   var b=dictFind(mid,FR,t);
+   if(b)return {text:b.text,src:"📖 Équipédia via le français ("+(partial?"partiel, ":"")+stTxt(b.status)+")"};
+   if(can(t,"m")){try{return {text:await mt(mid,FR,t),src:"📖 Équipédia → français → "+t[2]+(partial?" (partiel, à vérifier)":" (mot non vérifié)")}}catch(e){if(!partial)throw e}}
+   var s2=dictSub(mid,FR,t);if(s2.hit)return {text:s2.text,src:pm(s2)};
+   if(!partial)return {text:mid,src:"📖 Sens en français — pas encore de traduction vers "+t[2]+" dans le dictionnaire"}}}
+ if(can(f,"m")&&can(t,"m"))return {text:await mt(txt,f,t),src:""};
+ var s=dictSub(txt,f,t);if(s.hit)return {text:s.text,src:pm(s)};
+ var er=new Error("NOMT");er.hints=[];throw er}
+function speak(txt,l,cb){var done=false,fin=function(){if(!done){done=true;if(cb)cb()}},S=window.speechSynthesis;
+ var vl=l;if(!can(l,"v")){vl=BASE[0]}
+ if(!S||!window.SpeechSynthesisUtterance){toast("Voix non disponible ici");fin();return}
+ try{if(S.speaking||S.pending)S.cancel();S.resume()}catch(e){}
+ var u=new SpeechSynthesisUtterance(txt),ok=false;u.lang=vl[0];u.volume=1;u.rate=.95;
+ var v=S.getVoices().filter(function(x){return x.lang.toLowerCase().indexOf(vl[1])===0});if(v.length)u.voice=v[0];
+ u.onstart=function(){ok=true};u.onend=fin;u.onerror=function(e){fin();if(e.error!=="canceled"&&e.error!=="interrupted")toast("Voix bloquée : "+e.error)};
+ setTimeout(function(){if(!ok&&!done)toast("Aucun son. Vérifie le volume et la voix « "+vl[2]+" » (Réglages > Synthèse vocale)")},2500);
+ setTimeout(fin,Math.max(8000,txt.length*150));S.speak(u)}
+
+
+// ---------- Base partagée (serveur) + secours hors ligne ----------
+var API="/api",ONLINE=false,ADMIN=sessionStorage.getItem("lt_admin")||"",syncing=false;
+async function api(m,p,b){var hd={};if(b)hd["Content-Type"]="application/json";if(ADMIN)hd["x-admin-key"]=ADMIN;
+ var r=await fetch(API+p,{method:m,headers:hd,body:b?JSON.stringify(b):undefined});
+ if(!r.ok){var e=new Error("HTTP "+r.status);e.status=r.status;throw e}return r.json()}
+function status(){$("net").textContent=ONLINE?"🌐 En ligne : tes ajouts sont partagés avec la communauté. Ils restent « en attente » jusqu’à validation par un modérateur.":"📴 Serveur non joignable : tes ajouts restent sur cet appareil et seront envoyés dès que la connexion revient."}
+function ops(){return ld("lt_ops",[])}
+function queueOp(o){var a=ops();a.push(o);sv("lt_ops",a.slice(-200));syncNow()}
+function permanent(e){return e.status&&e.status<500&&e.status!==429}
+async function pull(){
+ var s=await api("GET","/entries"),l=await api("GET","/langs");ONLINE=true;
+ var ids={};s.forEach(function(x){ids[x.id]=1});
+ var keep=getRaw().filter(function(x){return x.local&&!ids[x.id]});
+ saveDict(s.concat(keep));
+ l.forEach(function(c){if(!allLangs().some(function(z){return z[1]===c.code}))CUSTOM.push({name:c.name,alt:c.alt,region:c.region,code:c.code,desc:c.descr})});
+ sv("lt_langs",CUSTOM);refreshSel();renderDict();renderLangs();status()}
+var again=false;
+async function syncNow(){if(syncing){again=true;return}syncing=true;
+ try{
+  var raw=getRaw();
+  for(var i=0;i<raw.length;i++){var x=raw[i];if(!x.local)continue;
+   try{await api("POST","/entries",x)}catch(e){if(!permanent(e))throw e}
+   var c=getRaw();c.forEach(function(y){if(y.id===x.id)delete y.local});saveDict(c)}
+  var o=ops();
+  while(o.length){var p=o[0];
+   try{if(p.t==="fix")await api("POST","/entries/"+p.id+"/fix",{text:p.text});else if(p.t==="report")await api("POST","/entries/"+p.id+"/report",{});else if(p.t==="lang")await api("POST","/langs",p.lang)}catch(e){if(!permanent(e))throw e}
+   o.shift();sv("lt_ops",o)}
+  await pull()}
+ catch(e){ONLINE=false;status()}
+ syncing=false;if(again){again=false;syncNow()}}
+async function modCall(m,p,b){try{await api(m,p,b);await pull();toast("✔ Fait")}catch(e){toast(e.status===401?"Clé modérateur refusée":"Action impossible (connexion ?)")}}
+function delClick(x){
+ if(!confirm("Supprimer « "+x.word+" → "+x.meaning+" » ?"))return;
+ if(x.local){delEntry(x.id);return}
+ if(!ADMIN){toast("Mot partagé : seul un modérateur peut le supprimer. Utilise ⚑ Signaler.");return}
+ modCall("DELETE","/entries/"+x.id)}
+
+// ---------- Causerie ----------
+var HK="lt_hist",hist=ld(HK,[]);
+function bubble(side){var d=document.createElement("div");d.className="m "+side;d.innerHTML='<div class="o"></div><div class="t"></div>';$("chat").appendChild(d);if($("em"))$("em").remove();d.scrollIntoView({block:"end"});return d}
+hist.forEach(function(h){var e=bubble(h.s);e.querySelector(".o").textContent=h.o;e.querySelector(".t").textContent=h.t;if(h.src){var s=document.createElement("div");s.className="src";s.textContent=h.src;e.appendChild(s)}});
+$("hc").onclick=function(){if(!hist.length||!confirm("Effacer l’historique de la conversation ? (Équipédia n’est pas touché)"))return;hist=[];sv(HK,hist);$("chat").innerHTML='<div class="empty" id="em">Historique effacé.</div>'};
+async function go(side,txt,el){
+ var f=L(side=="a"?A:B),t=L(side=="a"?B:A);
+ el.classList.remove("live");el.querySelector(".o").textContent=txt;el.querySelector(".t").textContent="…";
+ try{var r=await tr(txt,f,t),o=r.text;el.querySelector(".t").textContent=o;
+  if(r.src){var s=document.createElement("div");s.className="src";s.textContent=r.src;el.appendChild(s)}
+  var b=document.createElement("button");b.className="sp";b.textContent="🔊";b.setAttribute("aria-label","Écouter");b.onclick=function(){speak(o,t)};el.appendChild(b);
+  hist.push({s:side,o:txt,t:o,src:r.src});hist=hist.slice(-60);sv(HK,hist);
+  if($("au").checked)speak(o,t,resume);else resume();el.scrollIntoView({block:"end"})}
+ catch(e){el.querySelector(".t").textContent=e.message==="NOMT"?(e.hints&&e.hints.length?"ℹ Phrase non traduite en entier. Mots connus dans Équipédia : "+e.hints.join(" ; ")+". Ajoute la phrase complète dans Équipédia pour la traduire.":"ℹ Pas de traduction automatique pour "+f[2]+" ⇄ "+t[2]+" : seul le dictionnaire Équipédia est utilisé. Ajoute ce mot dans Équipédia."):"⚠ Traduction impossible (réseau ?). Les mots d’Équipédia restent disponibles hors ligne.";resume()}}
+var SR=window.SpeechRecognition||window.webkitSpeechRecognition,cur=null;
+function sttOk(l){if(!SR){toast("Micro non disponible ici. Ouvre dans Chrome ou écris le texte.");return false}if(!can(l,"s")){toast("La reconnaissance vocale de "+l[2]+" n’est pas prise en charge : écris le texte.");return false}return true}
+function listen(side){var l=L(side=="a"?A:B);
+ if(cur){cur.stop();return}if(!sttOk(l))return;if(cont)cstop();
+ if(window.speechSynthesis)speechSynthesis.cancel();
+ var btn=$(side=="a"?"ma":"mb"),r=new SR(),el=bubble(side),txt="";
+ el.classList.add("live");el.querySelector(".o").textContent="Je t’écoute…";
+ r.lang=l[0];r.interimResults=true;r.continuous=false;cur=r;btn.classList.add("rec");
+ r.onresult=function(e){txt="";for(var i=0;i<e.results.length;i++)txt+=e.results[i][0].transcript;el.querySelector(".o").textContent=txt};
+ r.onerror=function(e){toast(e.error=="not-allowed"||e.error=="service-not-allowed"?"Micro refusé : autorise-le pour ce site":e.error=="network"?"Pas de connexion : la reconnaissance vocale en a besoin":"Erreur micro : "+e.error)};
+ r.onend=function(){cur=null;btn.classList.remove("rec");txt=txt.trim();if(txt)go(side,txt,el);else el.remove()};
+ try{r.start()}catch(e){cur=null;btn.classList.remove("rec");el.remove()}}
+var cont=false,dir="a",crec=null,cel=null,holding=false,lt=0,busyL=false;
+function cl(){return L(dir=="a"?A:B)}function ct(){return L(dir=="a"?B:A)}
+function banner(){$("cb").textContent="🎧 "+cl()[2]+" → "+ct()[2]}
+function resume(){if(cont&&holding){holding=false;run()}}
+function cstop(){cont=false;holding=false;$("mc").classList.remove("rec");$("cbar").hidden=true;try{if(crec)crec.stop()}catch(e){}if(cel){cel.remove();cel=null}}
+function cstart(){if(!sttOk(cl()))return;if(cur)cur.stop();cont=true;holding=false;dir="a";$("mc").classList.add("rec");$("cbar").hidden=false;banner();run()}
+function livetr(txt){var n=Date.now();if(busyL||n-lt<1200||txt.length<4)return;lt=n;busyL=true;var el=cel;tr(txt,cl(),ct()).then(function(o){if(el&&cont&&el.classList.contains("live"))el.querySelector(".t").textContent=o.text}).catch(function(){}).then(function(){busyL=false})}
+function commit(side,text){holding=true;var el=cel||bubble(side);cel=null;if($("alt").checked){dir=dir=="a"?"b":"a";banner()}go(side,text,el)}
+function run(){
+ if(!cont||holding)return;
+ if(!sttOk(cl())){cstop();return}
+ var side=dir,r=new SR();r.lang=cl()[0];r.continuous=false;r.interimResults=true;crec=r;var lastIt="";
+ if(!cel){cel=bubble(side);cel.classList.add("live")}else cel.className="m live "+side;
+ cel.querySelector(".o").textContent="Je t’écoute…";cel.querySelector(".t").textContent="";
+ r.onresult=function(e){var fin="",it="";
+  for(var i=e.resultIndex;i<e.results.length;i++){var t=e.results[i][0].transcript;if(e.results[i].isFinal)fin+=t+" ";else it+=t}
+  fin=fin.trim();
+  if(fin){lastIt="";try{r.stop()}catch(x){}commit(side,fin);return}
+  if(it){lastIt=it;if(cel){cel.querySelector(".o").textContent=it;livetr(it)}}};
+ r.onerror=function(e){if(e.error=="not-allowed"||e.error=="service-not-allowed"){toast("Micro refusé : autorise-le pour ce site");cstop()}else if(e.error=="network"){toast("Pas de connexion : la reconnaissance vocale en a besoin");cstop()}else if(e.error!="no-speech"&&e.error!="aborted")toast("Micro : "+e.error)};
+ r.onend=function(){if(!cont||holding)return;if(lastIt.trim()){var t0=lastIt;lastIt="";commit(side,t0)}else setTimeout(run,250)};
+ try{r.start()}catch(e){setTimeout(run,500)}}
+$("mc").onclick=function(){if(cont)cstop();else cstart()};
+$("cf").onclick=function(){dir=dir=="a"?"b":"a";banner();if(cel){cel.remove();cel=null}try{if(crec)crec.stop()}catch(e){}};
+$("ma").onclick=function(){listen("a")};$("mb").onclick=function(){listen("b")};
+function send(side){var v=$("tx").value.trim();if(!v)return;$("tx").value="";go(side,v,bubble(side))}
+$("sa").onclick=function(){send("a")};$("sb").onclick=function(){send("b")};
+$("tx").onkeydown=function(e){if(e.key=="Enter")send("a")};
+
+refreshSel();renderDict();renderLangs();status();syncNow();setInterval(syncNow,90000);window.addEventListener("online",syncNow);
+if(window.speechSynthesis)speechSynthesis.getVoices();
+</script></body></html>
