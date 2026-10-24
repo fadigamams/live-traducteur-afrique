@@ -216,9 +216,8 @@ function renderDict(){
   if(vm){[["✔ Valider","validé"],["✖ Refuser","refusé"],["⚠ À corriger","à corriger"]].forEach(function(a){bt(a[0],function(){modCall("PATCH","/entries/"+x.id,{status:a[1]})})});if(x.status==="supprimé")bt("↩ Rétablir",function(){modCall("PATCH","/entries/"+x.id,{status:"en attente"})})}
   box.appendChild(d)})}
 $("dtr").onclick=restoreEntry;$("dictQ").oninput=renderDict;$("dictF").onchange=renderDict;$("vmode").onchange=async function(){var me=this;
- if(!me.checked){ADMIN="";sessionStorage.removeItem("lt_admin");renderDict();return}
- var k=prompt("Clé modérateur (secrète) :");if(!k){me.checked=false;return}
- ADMIN=k;try{await api("GET","/admin/check");sessionStorage.setItem("lt_admin",k);await pull();toast("Mode modérateur activé")}catch(e){ADMIN="";me.checked=false;toast("Clé refusée ou serveur injoignable")}renderDict()};
+ if(!me.checked){ADMIN="";try{sessionStorage.removeItem("lt_admin");localStorage.removeItem("lt_admin")}catch(e){}renderDict();return}
+ if(!(await askAdmin()))me.checked=false;renderDict()};
 $("dx").onclick=function(){var u=URL.createObjectURL(new Blob([JSON.stringify({dict:getDict(),langs:CUSTOM},null,1)],{type:"application/json"})),a=document.createElement("a");a.href=u;a.download="equipedia-sauvegarde.json";a.click();setTimeout(function(){URL.revokeObjectURL(u)},4000)};
 $("di").onclick=function(){$("dif").click()};
 $("dif").onchange=function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var j=JSON.parse(r.result),cur=getDict(),ids={};cur.forEach(function(x){ids[x.id]=1});var n=0;(j.dict||[]).forEach(function(x){if(x&&x.id&&x.word&&!ids[x.id]){x.local=true;cur.push(x);n++}});(j.langs||[]).forEach(function(c){if(c.name&&c.code&&!allLangs().some(function(l){return l[1]===c.code})){CUSTOM.push(c)}});sv("lt_langs",CUSTOM);saveDict(cur);refreshSel();renderDict();renderLangs();syncNow();toast(n+" mot(s) restauré(s)")}catch(e){toast("Fichier de sauvegarde illisible")}};r.readAsText(f);this.value=""};
@@ -316,7 +315,7 @@ function speak(txt,l,cb){var done=false,fin=function(){if(!done){done=true;if(cb
 
 
 // ---------- Base partagée (serveur) + secours hors ligne ----------
-var API="/api",ONLINE=false,ADMIN=sessionStorage.getItem("lt_admin")||"",syncing=false;
+var API="/api",ONLINE=false,ADMIN="",syncing=false;try{ADMIN=sessionStorage.getItem("lt_admin")||localStorage.getItem("lt_admin")||""}catch(e){}
 async function api(m,p,b){var hd={};if(b)hd["Content-Type"]="application/json";if(ADMIN)hd["x-admin-key"]=ADMIN;
  var r=await fetch(API+p,{method:m,headers:hd,body:b?JSON.stringify(b):undefined});
  if(!r.ok){var e=new Error("HTTP "+r.status);e.status=r.status;throw e}return r.json()}
@@ -345,11 +344,18 @@ async function syncNow(){if(syncing){again=true;return}syncing=true;
   await pull()}
  catch(e){ONLINE=false;status()}
  syncing=false;if(again){again=false;syncNow()}}
-async function modCall(m,p,b){try{await api(m,p,b);await pull();toast("✔ Fait")}catch(e){toast(e.status===401?"Clé modérateur refusée":"Action impossible (connexion ?)")}}
-function delClick(x){
+async function askAdmin(){
+ if(ADMIN)return true;
+ var k=prompt("Clé modérateur (secrète) :");if(!k)return false;
+ ADMIN=k;
+ try{await api("GET","/admin/check")}catch(e){ADMIN="";toast(e.status===401?"Clé refusée":"Serveur injoignable, réessaie dans 1 minute");return false}
+ try{sessionStorage.setItem("lt_admin",k);if(confirm("Rester modérateur sur cet appareil ?"))localStorage.setItem("lt_admin",k)}catch(e){}
+ $("vmode").checked=true;try{await pull()}catch(e){}return true}
+async function modCall(m,p,b){try{await api(m,p,b);await pull();toast("✔ Fait")}catch(e){toast(e.status===401?"Clé modérateur refusée":"Action impossible ("+(e.status||"réseau")+") : réessaie dans 1 minute")}}
+async function delClick(x){
  if(!confirm("Supprimer « "+x.word+" → "+x.meaning+" » ?"))return;
  if(x.local){delEntry(x.id);return}
- if(!ADMIN){toast("Mot partagé : seul un modérateur peut le supprimer. Utilise ⚑ Signaler.");return}
+ if(!(await askAdmin()))return;
  modCall("DELETE","/entries/"+x.id)}
 
 // ---------- Partage ----------
@@ -430,6 +436,6 @@ function send(side){var v=$("tx").value.trim();if(!v)return;$("tx").value="";go(
 $("sa").onclick=function(){send("a")};$("sb").onclick=function(){send("b")};
 $("tx").onkeydown=function(e){if(e.key=="Enter")send("a")};
 
-refreshSel();renderDict();renderLangs();status();try{initShare()}catch(e){}syncNow();setInterval(syncNow,90000);window.addEventListener("online",syncNow);
+refreshSel();renderDict();renderLangs();status();$("vmode").checked=!!ADMIN;try{initShare()}catch(e){}syncNow();setInterval(syncNow,90000);window.addEventListener("online",syncNow);
 if(window.speechSynthesis)speechSynthesis.getVoices();
 </script></body></html>
