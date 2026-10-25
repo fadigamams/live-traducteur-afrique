@@ -145,6 +145,7 @@ if(document.readyState==="complete")go();else window.addEventListener("load",go)
   <div class="row" style="margin-top:6px;gap:8px"><input id="vcWord" placeholder="Le mot écrit (approximatif)" aria-label="Mot écrit"><button class="ic" id="vcWordMic" type="button" aria-label="Dire le mot">🎤</button></div></details>
  <label class="au"><input type="checkbox" id="vcConsent"> J’accepte que ma voix soit publique dans le dictionnaire TAL</label>
  <button class="vcb" id="vcSend" type="button">✔ 3. Envoyer ma contribution</button>
+ <button class="vcb2" id="vcList" type="button">🎧 Écouter les contributions orales</button>
  <p class="note" id="vcMsg" style="margin:6px 0 0">Un volontaire écrira le mot à partir de ta voix, puis un modérateur le validera.</p>
 </div>
 
@@ -165,7 +166,7 @@ if(document.readyState==="complete")go();else window.addEventListener("load",go)
  <button class="btn" id="dictAdd">Ajouter</button>
  <p class="note">Chaque contribution reste « en attente » jusqu’à validation par une personne compétente. Ta définition n’est jamais modifiée sans ton accord.</p>
  <hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
- <div class="grid"><input id="dictQ" placeholder="🔎 Rechercher un mot…" aria-label="Rechercher"><select id="dictF" aria-label="Filtrer par statut"><option value="">Tous les statuts</option><option>en attente</option><option>validé</option><option>à corriger</option><option>refusé</option><option>supprimé</option><option>🎧 à transcrire</option></select></div>
+ <div class="grid"><input id="dictQ" placeholder="🔎 Rechercher un mot…" aria-label="Rechercher"><select id="dictF" aria-label="Filtrer par statut"><option value="">Tous les statuts</option><option>en attente</option><option>validé</option><option>à corriger</option><option>refusé</option><option>supprimé</option><option>🎧 à transcrire</option><option>🔊 avec voix</option></select></div>
  <label class="au"><input type="checkbox" id="vmode"> Mode modérateur (clé secrète, en ligne)</label>
  <div id="dictEntries" aria-live="polite"></div>
  <button class="btn2" id="dx">⬇ Sauvegarder (fichier)</button><button class="btn2" id="dtr" hidden>↩ Restaurer le dernier supprimé</button><button class="btn2" id="di">⬆ Restaurer</button><input type="file" id="dif" accept=".json,application/json" hidden>
@@ -285,7 +286,7 @@ async function saveEdit(){
 function renderDict(){
  $("dtr").hidden=!ld("lt_trash",[]).length;
  var box=$("dictEntries"),q=nk($("dictQ").value),f=$("dictF").value,vm=$("vmode").checked&&!!ADMIN;box.innerHTML="";
- var items=(f==="supprimé"?getRaw():getDict()).slice().reverse().filter(function(x){return(!f||(f==="🎧 à transcrire"?x.word===PLH:x.status===f))&&(!q||nk(x.word).indexOf(q)>=0||nk(x.meaning).indexOf(q)>=0||nk(x.variants).indexOf(q)>=0)});
+ var items=(f==="supprimé"?getRaw():getDict()).slice().reverse().filter(function(x){return(!f||(f==="🎧 à transcrire"?x.word===PLH:f==="🔊 avec voix"?!!(x.hasAudio||x.audio):x.status===f))&&(!q||nk(x.word).indexOf(q)>=0||nk(x.meaning).indexOf(q)>=0||nk(x.variants).indexOf(q)>=0)});
  if(!items.length){var d=document.createElement("div");d.className="entry";d.textContent=getDict().length?"Aucun résultat.":"Aucun mot enregistré pour le moment. Ajoute le premier !";box.appendChild(d);return}
  items.forEach(function(x){
   var d=document.createElement("div");d.className="entry";
@@ -569,6 +570,7 @@ $("vcWordMic").onclick=function(){dictate(this,$("vcWord"))};
 $("vcLang").onchange=function(){this.setAttribute("data-v",this.value)};
 $("vcHelp").onclick=function(){speak("Étape un : appuie sur le premier micro et dis le mot dans ta langue. Étape deux : appuie sur le petit micro et dis ce que ça veut dire en français. Étape trois : coche l’accord, puis appuie sur envoyer.",L("fr"))};
 $("vcSend").onclick=sendVoice;
+$("vcList").onclick=function(){$("dictQ").value="";$("dictF").value="🔊 avec voix";renderDict();$("dictEntries").scrollIntoView({block:"start"});if(!getDict().some(function(x){return x.hasAudio||x.audio}))toast("Aucune contribution orale pour le moment")};
 
 refreshSel();renderDict();renderLangs();status();$("vmode").checked=!!ADMIN;$("vt").onclick=function(){var n=0,lc=0;try{speechSynthesis.getVoices().forEach(function(x){if(x.lang.toLowerCase().indexOf("fr")===0){n++;if(x.localService)lc++}})}catch(e){}toast(n?"Voix françaises : "+n+" ("+lc+" hors ligne). Écoute…":"Aucune voix française trouvée : installe-la dans Réglages > Synthèse vocale");speak("Bonjour, ceci est un test de la voix.",L("fr"))};try{initShare()}catch(e){}syncNow();setInterval(syncNow,90000);window.addEventListener("online",syncNow);
 if(window.speechSynthesis)speechSynthesis.getVoices();
