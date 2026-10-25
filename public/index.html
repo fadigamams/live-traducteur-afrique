@@ -72,6 +72,27 @@ h2{font-size:1.1rem;margin:0 0 6px}
 @keyframes zin{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:none}}
 @keyframes ld{from{margin-left:-45%}to{margin-left:100%}}
 @media (prefers-reduced-motion:reduce){#splash .lg,#splash p,.sbar i{animation:none}}
+
+footer.dock{padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px))}
+.vs{font-size:.85rem;color:var(--mut);margin:0 0 6px;text-align:center;min-height:1.2em}
+.mics{display:flex;align-items:center;gap:10px;margin-top:8px}
+.mic.side{flex:1;min-width:0;padding:9px 4px;font-size:.88rem;line-height:1.25;border-radius:14px}
+.mic.side small{font-size:.7rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.orb{width:72px;height:72px;font-size:2rem}
+.chips{display:flex;gap:6px;margin-top:8px}
+.chip{flex:1;position:relative;display:block;font:inherit;padding:0;border:0;background:none;cursor:pointer;color:var(--ink);min-width:0}
+.chip input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+.chip span{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;height:100%;border:1px solid var(--line);border-radius:12px;background:var(--bg);font-size:1.1rem;line-height:1.1}
+.chip em{font-style:normal;font-size:.68rem;color:var(--mut);white-space:nowrap}
+.chip input:checked+span{background:var(--acc);border-color:var(--acc)}
+.chip input:checked+span em{color:var(--accink);font-weight:700}
+.chip input:focus-visible+span,.chip:focus-visible span{outline:2px solid var(--acc);outline-offset:2px}
+
+.vc{border:2px solid var(--acc);border-radius:14px;padding:12px;margin:10px 0;background:var(--card)}
+.vcb,.vcb2{display:block;width:100%;font:inherit;font-weight:700;padding:14px;border-radius:12px;border:0;margin-top:8px;cursor:pointer}
+.vcb{background:var(--acc);color:var(--accink)}.vcb2{background:var(--bg);color:var(--ink);border:1px solid var(--line);font-weight:600;padding:10px}
+.vcb.rec,.ic.rec{background:#ef4444;color:#fff;animation:p 1s infinite}
+[hidden]{display:none!important}
 </style></head><body>
 <div id="splash" role="img" aria-label="TAL, Traduction Africaine des Langues"><div class="lg"></div><p>Parle · Traduis · Partage nos langues</p><div class="sbar"><i></i></div></div>
 <script>(function(){var s=document.getElementById("splash"),seen=false;try{seen=sessionStorage.getItem("tal_splash")}catch(e){}
@@ -89,18 +110,24 @@ if(document.readyState==="complete")go();else window.addEventListener("load",go)
 
 <!-- A. CAUSERIE -->
 <section class="view on" id="vc">
-<header><select id="la" aria-label="Ma langue"></select><button class="ic" id="sw" aria-label="Inverser les langues">⇄</button><select id="lb" aria-label="Langue de l’interlocuteur"></select><button class="ic" id="hc" aria-label="Effacer l’historique">🗑</button></header>
-<div id="chat"><div class="empty" id="em">Appuie sur ton micro et parle : la traduction s’affiche et est lue à voix haute. Ton interlocuteur répond avec l’autre micro. Si le micro ne marche pas, écris le texte en bas.</div></div>
-<footer>
-<div class="row" style="align-items:center;gap:12px"><button id="mc" class="orb" aria-label="Conversation vocale en direct">🎙️</button><div style="flex:1;min-width:0"><div id="vstat" class="note" style="margin:0;font-size:.9rem">Appuie sur le micro et parle : traduction en direct, lue à voix haute</div><div id="cbar" hidden><b id="cb"></b> <button class="btn2" id="cf" style="margin:4px 0 0 0">⇄ Changer de sens</button></div></div></div>
-<div class="tx"><input id="tx" placeholder="Ou écris ici…" aria-label="Texte à traduire"><button id="sa" style="padding:0 16px;font-size:1.1rem" aria-label="Traduire">➤</button></div>
-<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--mut);font-size:.9rem">Plus d’options : 2 micros, sens inverse, voix</summary>
-<label class="au"><input type="checkbox" id="alt"> Dialogue à deux : alterner la langue à chaque phrase</label>
-<div class="row" style="margin-top:8px"><button class="mic" id="ma" style="padding:10px 6px">🎤 Moi<small id="na"></small></button><button class="mic" id="mb" style="padding:10px 6px">🎤 Lui / Elle<small id="nb"></small></button></div>
-<div class="tx"><button id="sb" style="flex:1;padding:12px 6px;font-size:.82rem" aria-label="Traduire dans l’autre sens">←</button></div>
-<label class="au"><input type="checkbox" id="au" checked> Lire la traduction à voix haute</label>
-<button class="btn2" id="vt" style="margin:8px 0 0 0">🔊 Tester la voix</button>
-</details>
+<header><select id="la" aria-label="Ma langue"></select><button class="ic" id="sw" aria-label="Inverser les langues">⇄</button><select id="lb" aria-label="Langue de l’interlocuteur"></select></header>
+<div id="chat"><div class="empty" id="em">Appuie sur <b>🎙️</b> pour une conversation en direct, ou sur <b>🎤 Moi</b> / <b>🎤 Lui-Elle</b> pour une phrase à la fois. Tu peux aussi écrire en bas.</div></div>
+<footer class="dock">
+<div id="vstat" class="vs">Appuie sur 🎙️ pour parler : traduction en direct</div>
+<div id="cbar" hidden><b id="cb"></b> <button class="btn2" id="cf" style="margin:0 0 0 6px">⇄ Changer de sens</button></div>
+<div class="tx"><input id="tx" placeholder="Ou écris ici…" aria-label="Texte à traduire"><button id="sa" style="padding:0 18px;font-size:1.1rem" aria-label="Traduire">➤</button></div>
+<div class="mics">
+<button class="mic side" id="ma" aria-label="Parler dans ma langue">🎤 Moi<small id="na"></small></button>
+<button id="mc" class="orb" aria-label="Conversation vocale en direct">🎙️</button>
+<button class="mic side" id="mb" aria-label="Micro de l’interlocuteur">🎤 Lui / Elle<small id="nb"></small></button>
+</div>
+<div class="chips">
+<label class="chip" title="Lire la traduction à voix haute"><input type="checkbox" id="au" checked><span>🔊<em>Voix</em></span></label>
+<label class="chip" title="Dialogue à deux : alterner la langue à chaque phrase"><input type="checkbox" id="alt"><span>👥<em>Alterner</em></span></label>
+<button class="chip" id="sb" aria-label="Traduire dans l’autre sens"><span>🔄<em>Sens inverse</em></span></button>
+<button class="chip" id="vt" aria-label="Tester la voix"><span>🔈<em>Test voix</em></span></button>
+<button class="chip" id="hc" aria-label="Effacer l’historique"><span>🗑<em>Effacer</em></span></button>
+</div>
 </footer>
 </section>
 
@@ -108,6 +135,19 @@ if(document.readyState==="complete")go();else window.addEventListener("load",go)
 <section class="view" id="ve"><div class="scroll">
  <h2>🌍 Équipédia — dictionnaire communautaire</h2>
  <p class="note">Mots et expressions des langues africaines et du nouchi, enrichis par la communauté.</p><p class="note" id="net"></p>
+<div class="vc" id="vcard"><b>🎙️ Contribuer avec ma voix <small style="font-weight:400;color:var(--mut)">(sans écrire)</small></b>
+ <button class="vcb2" id="vcHelp" type="button">🔊 Écouter les consignes</button>
+ <select id="vcLang" aria-label="Ma langue" style="margin-top:8px"></select>
+ <button class="vcb" id="vcRec" type="button">🎤 1. Dis le mot dans ta langue</button>
+ <button class="vcb2" id="vcPlay" type="button" hidden>▶ Écouter ma voix</button>
+ <div class="row" style="margin-top:8px;gap:8px"><input id="vcMeaning" placeholder="2. Le sens en français" aria-label="Sens en français"><button class="ic" id="vcMeanMic" type="button" aria-label="Dire le sens en français">🎤</button></div>
+ <details style="margin-top:8px"><summary style="color:var(--mut);font-size:.88rem;cursor:pointer">Proposer l’écriture du mot (facultatif)</summary>
+  <div class="row" style="margin-top:6px;gap:8px"><input id="vcWord" placeholder="Le mot écrit (approximatif)" aria-label="Mot écrit"><button class="ic" id="vcWordMic" type="button" aria-label="Dire le mot">🎤</button></div></details>
+ <label class="au"><input type="checkbox" id="vcConsent"> J’accepte que ma voix soit publique dans le dictionnaire TAL</label>
+ <button class="vcb" id="vcSend" type="button">✔ 3. Envoyer ma contribution</button>
+ <p class="note" id="vcMsg" style="margin:6px 0 0">Un volontaire écrira le mot à partir de ta voix, puis un modérateur le validera.</p>
+</div>
+
  <div id="editbar" class="note" hidden style="color:var(--b);font-weight:700">✏️ Modification de <span id="edname"></span> <button class="btn2" id="edcancel" style="margin:0 0 0 6px">Annuler</button><label class="au" style="margin-top:4px"><input type="checkbox" id="edval" checked> Valider aussi cette entrée</label></div>
  <div class="grid">
   <select id="dictLang" aria-label="Langue du mot"></select>
@@ -125,7 +165,7 @@ if(document.readyState==="complete")go();else window.addEventListener("load",go)
  <button class="btn" id="dictAdd">Ajouter</button>
  <p class="note">Chaque contribution reste « en attente » jusqu’à validation par une personne compétente. Ta définition n’est jamais modifiée sans ton accord.</p>
  <hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
- <div class="grid"><input id="dictQ" placeholder="🔎 Rechercher un mot…" aria-label="Rechercher"><select id="dictF" aria-label="Filtrer par statut"><option value="">Tous les statuts</option><option>en attente</option><option>validé</option><option>à corriger</option><option>refusé</option><option>supprimé</option></select></div>
+ <div class="grid"><input id="dictQ" placeholder="🔎 Rechercher un mot…" aria-label="Rechercher"><select id="dictF" aria-label="Filtrer par statut"><option value="">Tous les statuts</option><option>en attente</option><option>validé</option><option>à corriger</option><option>refusé</option><option>supprimé</option><option>🎧 à transcrire</option></select></div>
  <label class="au"><input type="checkbox" id="vmode"> Mode modérateur (clé secrète, en ligne)</label>
  <div id="dictEntries" aria-live="polite"></div>
  <button class="btn2" id="dx">⬇ Sauvegarder (fichier)</button><button class="btn2" id="dtr" hidden>↩ Restaurer le dernier supprimé</button><button class="btn2" id="di">⬆ Restaurer</button><input type="file" id="dif" accept=".json,application/json" hidden>
@@ -186,8 +226,8 @@ function lbl(l){return l[2]+(l[3].indexOf("m")<0?" (dictionnaire)":"")}
 function can(l,k){return l[3].indexOf(k)>=0}
 var A="fr",B="dyu",ss=ld("lt2",null);if(ss){A=ss[0];B=ss[1]}
 function fill(sel,val){sel.innerHTML="";allLangs().forEach(function(l){var o=document.createElement("option");o.value=l[1];o.textContent=lbl(l);sel.appendChild(o)});sel.value=val}
-function refreshSel(){fill($("la"),A);fill($("lb"),B);fill($("dictLang"),$("dictLang").getAttribute("data-v")||"nouchi");fill($("dictTarget"),$("dictTarget").getAttribute("data-v")||"fr");lab()}
-function lab(){$("na").textContent=L(A)[2];$("nb").textContent=L(B)[2];$("sa").setAttribute("aria-label",L(A)[2]+" → "+L(B)[2]);$("tx").placeholder="Écrire en "+L(A)[2].split(" (")[0]+" ➤ "+L(B)[2].split(" (")[0];$("sb").textContent="← Sens inverse : "+L(B)[2].split(" (")[0]+" → "+L(A)[2].split(" (")[0];sv("lt2",[A,B])}
+function refreshSel(){fill($("la"),A);fill($("lb"),B);fill($("dictLang"),$("dictLang").getAttribute("data-v")||"nouchi");fill($("dictTarget"),$("dictTarget").getAttribute("data-v")||"fr");fill($("vcLang"),$("vcLang").getAttribute("data-v")||"nouchi");lab()}
+function lab(){$("na").textContent=L(A)[2].split(" (")[0];$("nb").textContent=L(B)[2].split(" (")[0];$("sa").setAttribute("aria-label",L(A)[2]+" → "+L(B)[2]);$("tx").placeholder="Écrire en "+L(A)[2].split(" (")[0]+" ➤ "+L(B)[2].split(" (")[0];$("sb").setAttribute("aria-label","Traduire dans l’autre sens : "+L(B)[2]+" → "+L(A)[2]);$("sb").title=L(B)[2].split(" (")[0]+" → "+L(A)[2].split(" (")[0];sv("lt2",[A,B])}
 $("la").onchange=function(){A=this.value;lab()};$("lb").onchange=function(){B=this.value;lab()};
 $("sw").onclick=function(){var t=A;A=B;B=t;$("la").value=A;$("lb").value=B;lab()};
 $("dictLang").onchange=function(){this.setAttribute("data-v",this.value)};$("dictTarget").onchange=function(){this.setAttribute("data-v",this.value)};
@@ -245,11 +285,11 @@ async function saveEdit(){
 function renderDict(){
  $("dtr").hidden=!ld("lt_trash",[]).length;
  var box=$("dictEntries"),q=nk($("dictQ").value),f=$("dictF").value,vm=$("vmode").checked&&!!ADMIN;box.innerHTML="";
- var items=(f==="supprimé"?getRaw():getDict()).slice().reverse().filter(function(x){return(!f||x.status===f)&&(!q||nk(x.word).indexOf(q)>=0||nk(x.meaning).indexOf(q)>=0||nk(x.variants).indexOf(q)>=0)});
+ var items=(f==="supprimé"?getRaw():getDict()).slice().reverse().filter(function(x){return(!f||(f==="🎧 à transcrire"?x.word===PLH:x.status===f))&&(!q||nk(x.word).indexOf(q)>=0||nk(x.meaning).indexOf(q)>=0||nk(x.variants).indexOf(q)>=0)});
  if(!items.length){var d=document.createElement("div");d.className="entry";d.textContent=getDict().length?"Aucun résultat.":"Aucun mot enregistré pour le moment. Ajoute le premier !";box.appendChild(d);return}
  items.forEach(function(x){
   var d=document.createElement("div");d.className="entry";
-  var h=document.createElement("div"),b=document.createElement("b");b.textContent=x.word;h.appendChild(b);
+  var h=document.createElement("div"),b=document.createElement("b");b.textContent=x.word===PLH?"🎧 À transcrire":x.word;h.appendChild(b);
   h.appendChild(document.createTextNode(" → "+x.meaning));var s=document.createElement("span");s.className="st "+stKey(x.status);s.textContent=x.status;h.appendChild(s);d.appendChild(h);
   var m=document.createElement("div");m.className="note";
   m.textContent=L(x.lang)[2]+" → "+L(x.target)[2]+[x.pron&&"prononciation : "+x.pron,x.region&&"région : "+x.region,x.ctx&&"contexte : "+x.ctx,x.cues&&"indices : "+x.cues,x.variants&&"variantes : "+x.variants,x.example&&"exemple : "+x.example,x.others&&"autres langues : "+x.others.replace(/\n/g," ; ")].filter(Boolean).map(function(t){return" · "+t}).join("");
@@ -257,6 +297,7 @@ function renderDict(){
   (x.fixes||[]).forEach(function(c){var p=document.createElement("div");p.className="fx";p.textContent="✎ Correction proposée : "+c.text;d.appendChild(p)});
   if(x.reports){var r=document.createElement("div");r.className="fx";r.textContent="⚑ Signalé "+x.reports+" fois";d.appendChild(r)}
   function bt(t,fn){var k=document.createElement("button");k.className="btn2";k.textContent=t;k.onclick=fn;d.appendChild(k)}
+  if(x.hasAudio||x.audio)bt("▶ Écouter",function(){playEntry(x)});
   bt("✎ Proposer une correction",function(){var t=prompt("Quelle correction proposes-tu pour « "+x.word+" » ?");if(t&&t.trim()){upd(x.id,function(e){e.fixes=(e.fixes||[]).concat([{text:t.trim(),date:new Date().toISOString()}])});queueOp({t:"fix",id:x.id,text:t.trim()})}});
   bt("⚑ Signaler",function(){upd(x.id,function(e){e.reports=(e.reports||0)+1;if(e.status==="validé")e.status="à corriger"});queueOp({t:"report",id:x.id});toast("Signalement enregistré")});
   if(vm||x.local)bt("✏️ Modifier",function(){editEntry(x)});
@@ -294,7 +335,7 @@ function splitSenses(m){var out=[],cur="",dp=0,s=String(m);
  return out.map(function(z){var mm=z.match(/^(.*?)\s*[(\[]([^)\]]*)[)\]]\s*$/);return mm?{d:mm[1].trim(),cues:mm[2]}:{d:z.trim(),cues:""}}).filter(function(z){return z.d})}
 function senses(x){return /[(\[]/.test(x.meaning)?splitSenses(x.meaning):[{d:x.meaning,cues:""}]}
 function dictFind(txt,f,t){var k=nk(txt),hits=[],rk={"validé":2,"en attente":1};
- getDict().forEach(function(x){if(x.status==="refusé")return;var r=rk[x.status]||0;
+ getDict().forEach(function(x){if(x.status==="refusé"||x.word===PLH)return;var r=rk[x.status]||0;
   if(x.lang===f[1]&&x.target===t[1]&&nk(x.word)===k)senses(x).forEach(function(z){hits.push({text:z.d,r:r})});
   else if(x.target===f[1]&&x.lang===t[1]&&senses(x).some(function(z){return nk(z.d)===k}))hits.push({text:x.word,r:r})});
  if(!hits.length)return null;var mr=Math.max.apply(null,hits.map(function(x){return x.r})),tx=[];
@@ -302,7 +343,7 @@ function dictFind(txt,f,t){var k=nk(txt),hits=[],rk={"validé":2,"en attente":1}
  return {text:tx[0],alts:tx.slice(1),status:mr===2?"validé":"en attente"}}
 function pad(s){return " "+nk(s).replace(/[^a-z0-9\u0080-\uffff]+/g," ").trim()+" "}
 function dictHints(txt,f,t){var P=pad(txt),out=[];
- getDict().forEach(function(x){if(x.status==="refusé")return;var w=null,m=null;
+ getDict().forEach(function(x){if(x.status==="refusé"||x.word===PLH)return;var w=null,m=null;
   if(x.lang===f[1]&&x.target===t[1]){w=x.word;m=x.meaning}else if(x.target===f[1]&&x.lang===t[1]){w=x.meaning;m=x.word}
   if(w&&P.indexOf(pad(w))>=0&&P!==pad(w))out.push("« "+w+" » = "+m+(x.status==="validé"?"":" (non validé)"))});
  return out}
@@ -320,7 +361,7 @@ function choose(c,ctx){
 function dictSub(txt,f,t){
  var pairs={},rk={"validé":2,"en attente":1},maxn=1;
  function add(s,o){var k=nk(s);(pairs[k]=pairs[k]||[]).push(o);maxn=Math.max(maxn,k.split(" ").length)}
- getDict().forEach(function(x){if(x.status==="refusé")return;var r=rk[x.status]||0;
+ getDict().forEach(function(x){if(x.status==="refusé"||x.word===PLH)return;var r=rk[x.status]||0;
   if(x.lang===f[1]&&x.target===t[1])senses(x).forEach(function(z){add(x.word,{d:z.d,r:r,cues:cueList(z.cues+","+(x.cues||""))})});
   else if(x.target===f[1]&&x.lang===t[1])senses(x).forEach(function(z){add(z.d,{d:x.word,r:r,cues:[]})})});
  var tk=String(txt).trim().split(/\s+/),ctx=tk.map(function(w){return nk(w)}),out=[],hit=0,amb=[],i=0;
@@ -373,7 +414,7 @@ function queueOp(o){var a=ops();a.push(o);sv("lt_ops",a.slice(-200));syncNow()}
 function permanent(e){return e.status&&e.status<500&&e.status!==429}
 async function pull(){
  var s=await api("GET","/entries"),l=await api("GET","/langs");ONLINE=true;
- var ids={};s.forEach(function(x){ids[x.id]=1});
+ var ids={},old={};s.forEach(function(x){ids[x.id]=1});getRaw().forEach(function(x){old[x.id]=x});s.forEach(function(x){if(old[x.id]&&old[x.id].audio)x.audio=old[x.id].audio});
  var keep=getRaw().filter(function(x){return x.local&&!ids[x.id]});
  saveDict(s.concat(keep));
  l.forEach(function(c){if(!allLangs().some(function(z){return z[1]===c.code}))CUSTOM.push({name:c.name,alt:c.alt,region:c.region,code:c.code,desc:c.descr})});
@@ -383,8 +424,12 @@ async function syncNow(){if(syncing){again=true;return}syncing=true;
  try{
   var raw=getRaw();
   for(var i=0;i<raw.length;i++){var x=raw[i];if(!x.local)continue;
-   try{await api("POST","/entries",x)}catch(e){if(!permanent(e))throw e}
+   var ex=Object.assign({},x);delete ex.audio;try{await api("POST","/entries",ex)}catch(e){if(!permanent(e))throw e}
    var c=getRaw();c.forEach(function(y){if(y.id===x.id)delete y.local});saveDict(c)}
+  raw=getRaw();
+  for(i=0;i<raw.length;i++){x=raw[i];if(!x.audio||x.local)continue;
+   try{await api("POST","/entries/"+x.id+"/audio",x.audio)}catch(e){if(!permanent(e))throw e}
+   c=getRaw();c.forEach(function(y){if(y.id===x.id){delete y.audio;y.hasAudio=true}});saveDict(c)}
   var o=ops();
   while(o.length){var p=o[0];
    try{if(p.t==="fix")await api("POST","/entries/"+p.id+"/fix",{text:p.text});else if(p.t==="report")await api("POST","/entries/"+p.id+"/report",{});else if(p.t==="lang")await api("POST","/langs",p.lang)}catch(e){if(!permanent(e))throw e}
@@ -460,7 +505,7 @@ function cl(){return L(dir=="a"?A:B)}function ct(){return L(dir=="a"?B:A)}
 function banner(){$("cb").textContent="🎧 "+cl()[2]+" → "+ct()[2]}
 function vs(t){$("vstat").textContent=t}
 function resume(){if(cont&&holding){holding=false;vs("🎙️ Je t’écoute… parle en "+cl()[2].split(" (")[0]);run()}}
-function cstop(){cont=false;holding=false;$("mc").classList.remove("rec");$("cbar").hidden=true;vs("Appuie sur le micro et parle : traduction en direct, lue à voix haute");try{if(crec)crec.stop()}catch(e){}if(cel){cel.remove();cel=null}}
+function cstop(){cont=false;holding=false;$("mc").classList.remove("rec");$("cbar").hidden=true;vs("Appuie sur 🎙️ pour parler : traduction en direct");try{if(crec)crec.stop()}catch(e){}if(cel){cel.remove();cel=null}}
 function cstart(){if(!sttOk(cl()))return;if(cur)cur.stop();cont=true;holding=false;dir="a";$("mc").classList.add("rec");$("cbar").hidden=false;banner();vs("🎙️ Je t’écoute… parle en "+cl()[2].split(" (")[0]);run()}
 function livetr(txt){var n=Date.now();if(busyL||n-lt<1200||txt.length<4)return;lt=n;busyL=true;var el=cel;tr(txt,cl(),ct()).then(function(o){if(el&&cont&&el.classList.contains("live"))el.querySelector(".t").textContent=o.text}).catch(function(){}).then(function(){busyL=false})}
 function commit(side,text){holding=true;vs("🌐 Traduction…");var el=cel||bubble(side);cel=null;if($("alt").checked&&can(L(dir=="a"?B:A),"s")){dir=dir=="a"?"b":"a";banner()}go(side,text,el)}
@@ -484,6 +529,46 @@ $("ma").onclick=function(){listen("a")};$("mb").onclick=function(){listen("b")};
 function send(side){var v=$("tx").value.trim();if(!v)return;$("tx").value="";go(side,v,bubble(side))}
 $("sa").onclick=function(){send("a")};$("sb").onclick=function(){send("b")};
 $("tx").onkeydown=function(e){if(e.key=="Enter")send("a")};
+
+// ---------- Contribution par la voix (Équipédia) ----------
+var PLH="(à transcrire)",VC={rec:null,audio:null,t:0};
+function playEntry(x){var src=x.audio?"data:"+x.audio.mime+";base64,"+x.audio.b64:"/api/entries/"+x.id+"/audio";try{new Audio(src).play().catch(function(){toast("Lecture impossible")})}catch(e){toast("Lecture impossible")}}
+function vcMsg(t){$("vcMsg").textContent=t}
+function dictate(btn,input){var R=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!R){toast("Dictée non disponible ici : ouvre l’appli dans Chrome");return}
+ var r=new R();r.lang="fr-FR";r.interimResults=true;r.continuous=false;btn.classList.add("rec");
+ r.onresult=function(e){var t="";for(var i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;input.value=t};
+ r.onerror=function(e){toast(e.error=="not-allowed"?"Micro refusé : autorise-le pour ce site":e.error=="network"?"Pas de connexion : la dictée en a besoin":"Micro : "+e.error)};
+ r.onend=function(){btn.classList.remove("rec")};try{r.start()}catch(e){btn.classList.remove("rec")}}
+function sendVoice(){
+ var m=$("vcMeaning").value.trim().replace(/\s+/g," "),w=$("vcWord").value.trim().replace(/\s+/g," ")||PLH;
+ if(!VC.audio){toast("Enregistre d’abord ta voix avec le micro 1");return}
+ if(!m){toast("Dis ou écris le sens en français");return}
+ if(!$("vcConsent").checked){toast("Coche l’accord pour que ta voix soit utilisée");return}
+ var it=getDict(),now=new Date().toISOString();
+ it.push({id:"e"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),word:w,lang:$("vcLang").value,meaning:m,target:"fr",example:"",cues:"",ctx:"",pron:"",region:"",variants:"",others:"",status:"en attente",createdAt:now,updatedAt:now,fixes:[],reports:0,local:true,audio:{mime:VC.audio.mime,b64:VC.audio.b64}});
+ if(!saveDict(it))return;
+ VC.audio=null;$("vcMeaning").value="";$("vcWord").value="";$("vcConsent").checked=false;$("vcPlay").hidden=true;$("vcRec").textContent="🎤 1. Dis le mot dans ta langue";
+ vcMsg("✔ Merci ! Ta voix est enregistrée. Tu peux en ajouter une autre.");toast("✔ Merci ! Contribution envoyée");renderDict();syncNow()}
+$("vcRec").onclick=function(){
+ var b=this;if(VC.rec&&VC.rec.state==="recording"){VC.rec.stop();return}
+ if(!navigator.mediaDevices||!window.MediaRecorder){toast("Enregistrement non disponible : ouvre l’appli dans Chrome");return}
+ navigator.mediaDevices.getUserMedia({audio:true}).then(function(st){
+  var ch=[],mr=new MediaRecorder(st,{audioBitsPerSecond:24000});VC.rec=mr;
+  mr.ondataavailable=function(e){if(e.data&&e.data.size)ch.push(e.data)};
+  mr.onstop=function(){clearTimeout(VC.t);st.getTracks().forEach(function(t){t.stop()});b.classList.remove("rec");b.textContent="🎤 Refaire l’enregistrement";
+   var blob=new Blob(ch,{type:mr.mimeType||"audio/webm"});
+   if(!blob.size||blob.size>240000){toast(blob.size?"Trop long : 8 secondes maximum":"Rien enregistré, réessaie");VC.audio=null;$("vcPlay").hidden=true;return}
+   var fr=new FileReader();fr.onload=function(){VC.audio={mime:(blob.type||"audio/webm").split(";")[0],b64:String(fr.result).split(",")[1]};$("vcPlay").hidden=false;vcMsg("✔ Ta voix est enregistrée. Écoute-la avec ▶, puis dis le sens.")};fr.readAsDataURL(blob)};
+  mr.start();b.classList.add("rec");b.textContent="⏹ Appuie pour arrêter";vcMsg("🎙️ Je t’écoute… dis le mot dans ta langue");
+  VC.t=setTimeout(function(){if(mr.state==="recording")mr.stop()},8000)
+ }).catch(function(){toast("Micro refusé : autorise-le pour ce site")})};
+$("vcPlay").onclick=function(){if(VC.audio)try{new Audio("data:"+VC.audio.mime+";base64,"+VC.audio.b64).play()}catch(e){}};
+$("vcMeanMic").onclick=function(){dictate(this,$("vcMeaning"))};
+$("vcWordMic").onclick=function(){dictate(this,$("vcWord"))};
+$("vcLang").onchange=function(){this.setAttribute("data-v",this.value)};
+$("vcHelp").onclick=function(){speak("Étape un : appuie sur le premier micro et dis le mot dans ta langue. Étape deux : appuie sur le petit micro et dis ce que ça veut dire en français. Étape trois : coche l’accord, puis appuie sur envoyer.",L("fr"))};
+$("vcSend").onclick=sendVoice;
 
 refreshSel();renderDict();renderLangs();status();$("vmode").checked=!!ADMIN;$("vt").onclick=function(){var n=0,lc=0;try{speechSynthesis.getVoices().forEach(function(x){if(x.lang.toLowerCase().indexOf("fr")===0){n++;if(x.localService)lc++}})}catch(e){}toast(n?"Voix françaises : "+n+" ("+lc+" hors ligne). Écoute…":"Aucune voix française trouvée : installe-la dans Réglages > Synthèse vocale");speak("Bonjour, ceci est un test de la voix.",L("fr"))};try{initShare()}catch(e){}syncNow();setInterval(syncNow,90000);window.addEventListener("online",syncNow);
 if(window.speechSynthesis)speechSynthesis.getVoices();
