@@ -93,6 +93,8 @@ footer.dock{padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px))}
 .vcb{background:var(--acc);color:var(--accink)}.vcb2{background:var(--bg);color:var(--ink);border:1px solid var(--line);font-weight:600;padding:10px}
 .vcb.rec,.ic.rec{background:#ef4444;color:#fff;animation:p 1s infinite}
 [hidden]{display:none!important}
+.alts{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
+.alts small{color:var(--mut);width:100%}.alts .btn2{margin:0}
 </style></head><body>
 <div id="splash" role="img" aria-label="TAL, Traduction Africaine des Langues"><div class="lg"></div><p>Parle · Traduis · Partage nos langues</p><div class="sbar"><i></i></div></div>
 <script>(function(){var s=document.getElementById("splash"),seen=false;try{seen=sessionStorage.getItem("tal_splash")}catch(e){}
@@ -140,9 +142,9 @@ if(document.readyState==="complete")go();else window.addEventListener("load",go)
  <select id="vcLang" aria-label="Ma langue" style="margin-top:8px"></select>
  <button class="vcb" id="vcRec" type="button">🎤 1. Dis le mot dans ta langue</button>
  <button class="vcb2" id="vcPlay" type="button" hidden>▶ Écouter ma voix</button>
- <div class="row" style="margin-top:8px;gap:8px"><input id="vcMeaning" placeholder="2. Le sens en français" aria-label="Sens en français"><button class="ic" id="vcMeanMic" type="button" aria-label="Dire le sens en français">🎤</button></div>
- <details style="margin-top:8px"><summary style="color:var(--mut);font-size:.88rem;cursor:pointer">Proposer l’écriture du mot (facultatif)</summary>
-  <div class="row" style="margin-top:6px;gap:8px"><input id="vcWord" placeholder="Le mot écrit (approximatif)" aria-label="Mot écrit"><button class="ic" id="vcWordMic" type="button" aria-label="Dire le mot">🎤</button></div></details>
+ <div class="row" style="margin-top:8px;gap:8px"><input id="vcWord" placeholder="Le mot écrit (automatique, à corriger)" aria-label="Mot écrit"><button class="ic" id="vcWordMic" type="button" aria-label="Dire le mot pour l’écrire">🎤</button></div>
+ <div class="row" style="margin-top:8px;gap:8px"><input id="vcMeaning" placeholder="2. Le sens en français (automatique, à corriger)" aria-label="Sens en français"><button class="ic" id="vcMeanMic" type="button" aria-label="Dire le sens en français">🎤</button></div>
+ <p class="note" style="margin:8px 0 0">✏️ Le texte s’écrit tout seul. Touche-le pour le corriger, ou choisis une autre écriture proposée. Pour un mot africain, l’écriture est approximative.</p>
  <label class="au"><input type="checkbox" id="vcConsent"> J’accepte que ma voix soit publique dans le dictionnaire TAL</label>
  <button class="vcb" id="vcSend" type="button">✔ 3. Envoyer ma contribution</button>
  <button class="vcb2" id="vcList" type="button">🎧 Écouter les contributions orales</button>
@@ -153,9 +155,9 @@ if(document.readyState==="complete")go();else window.addEventListener("load",go)
  <div class="grid">
   <select id="dictLang" aria-label="Langue du mot"></select>
   <select id="dictTarget" aria-label="Langue de la traduction"></select>
-  <input id="dictWord" class="full" placeholder="Mot ou expression (ex. dohi)" aria-label="Mot ou expression">
-  <input id="dictMeaning" class="full" placeholder="Traduction / signification (ex. c’est un mensonge)" aria-label="Traduction">
-  <input id="dictExample" class="full" placeholder="Exemple de phrase (facultatif)" aria-label="Exemple">
+  <div class="row full" style="gap:8px"><input id="dictWord" placeholder="Mot ou expression (ex. dohi)" aria-label="Mot ou expression"><button class="ic" type="button" data-mic="dictWord" aria-label="Dire à voix haute">🎤</button></div>
+  <div class="row full" style="gap:8px"><input id="dictMeaning" placeholder="Traduction / signification (ex. c’est un mensonge)" aria-label="Traduction"><button class="ic" type="button" data-mic="dictMeaning" aria-label="Dire à voix haute">🎤</button></div>
+  <div class="row full" style="gap:8px"><input id="dictExample" placeholder="Exemple de phrase (facultatif)" aria-label="Exemple"><button class="ic" type="button" data-mic="dictExample" aria-label="Dire à voix haute">🎤</button></div>
   <input id="dictCtx" placeholder="Contexte / sens (facultatif)" aria-label="Contexte">
   <input id="dictPron" placeholder="Prononciation (facultatif)" aria-label="Prononciation">
   <input id="dictReg" placeholder="Région d’usage (facultatif)" aria-label="Région">
@@ -535,19 +537,23 @@ $("tx").onkeydown=function(e){if(e.key=="Enter")send("a")};
 var PLH="(à transcrire)",VC={rec:null,audio:null,t:0};
 function playEntry(x){var src=x.audio?"data:"+x.audio.mime+";base64,"+x.audio.b64:"/api/entries/"+x.id+"/audio";try{new Audio(src).play().catch(function(){toast("Lecture impossible")})}catch(e){toast("Lecture impossible")}}
 function vcMsg(t){$("vcMsg").textContent=t}
-function dictate(btn,input){var R=window.SpeechRecognition||window.webkitSpeechRecognition;
- if(!R){toast("Dictée non disponible ici : ouvre l’appli dans Chrome");return}
- var r=new R();r.lang="fr-FR";r.interimResults=true;r.continuous=false;btn.classList.add("rec");
- r.onresult=function(e){var t="";for(var i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;input.value=t};
- r.onerror=function(e){toast(e.error=="not-allowed"?"Micro refusé : autorise-le pour ce site":e.error=="network"?"Pas de connexion : la dictée en a besoin":"Micro : "+e.error)};
- r.onend=function(){btn.classList.remove("rec")};try{r.start()}catch(e){btn.classList.remove("rec")}}
+function altBox(input){var row=input.closest(".row")||input,b=row.nextElementSibling;if(!b||!b.classList.contains("alts")){b=document.createElement("div");b.className="alts full";row.parentNode.insertBefore(b,row.nextSibling)}return b}
+function showAlts(box,input,res){box.innerHTML="";var seen={};seen[nz(input.value)]=1;
+ for(var i=0;i<res.length&&i<4;i++){var t=res[i].transcript.trim();if(!t||seen[nz(t)])continue;seen[nz(t)]=1;(function(t){var b=document.createElement("button");b.type="button";b.className="btn2";b.textContent=t;b.onclick=function(){input.value=t;box.innerHTML=""};box.appendChild(b)})(t)}
+ if(box.children.length){var l=document.createElement("small");l.textContent="Autres écritures possibles, touche la bonne :";box.insertBefore(l,box.firstChild)}}
+function dictate(btn,input,quiet){var R=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!R){if(!quiet)toast("Dictée non disponible ici : ouvre l’appli dans Chrome");return null}
+ var r=new R(),box=altBox(input);r.lang="fr-FR";r.interimResults=true;r.continuous=false;r.maxAlternatives=4;box.innerHTML="";if(btn)btn.classList.add("rec");
+ r.onresult=function(e){var t="";for(var i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;input.value=t;var last=e.results[e.results.length-1];if(last.isFinal)showAlts(box,input,last)};
+ r.onerror=function(e){if(quiet&&e.error!=="not-allowed")return;toast(e.error=="not-allowed"?"Micro refusé : autorise-le pour ce site":e.error=="network"?"Pas de connexion : l’écriture automatique en a besoin":"Micro : "+e.error)};
+ r.onend=function(){if(btn)btn.classList.remove("rec")};try{r.start()}catch(e){if(btn)btn.classList.remove("rec");return null}return r}
 function sendVoice(){
  var m=$("vcMeaning").value.trim().replace(/\s+/g," "),w=$("vcWord").value.trim().replace(/\s+/g," ")||PLH;
  if(!VC.audio){toast("Enregistre d’abord ta voix avec le micro 1");return}
  if(!m){toast("Dis ou écris le sens en français");return}
  if(!$("vcConsent").checked){toast("Coche l’accord pour que ta voix soit utilisée");return}
  var it=getDict(),now=new Date().toISOString();
- it.push({id:"e"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),word:w,lang:$("vcLang").value,meaning:m,target:"fr",example:"",cues:"",ctx:"",pron:"",region:"",variants:"",others:"",status:"en attente",createdAt:now,updatedAt:now,fixes:[],reports:0,local:true,audio:{mime:VC.audio.mime,b64:VC.audio.b64}});
+ it.push({id:"e"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),word:w,lang:$("vcLang").value,meaning:m,target:"fr",example:"",cues:"",ctx:(w===PLH?"":"voix : écriture automatique à vérifier"),pron:"",region:"",variants:"",others:"",status:"en attente",createdAt:now,updatedAt:now,fixes:[],reports:0,local:true,audio:{mime:VC.audio.mime,b64:VC.audio.b64}});
  if(!saveDict(it))return;
  VC.audio=null;$("vcMeaning").value="";$("vcWord").value="";$("vcConsent").checked=false;$("vcPlay").hidden=true;$("vcRec").textContent="🎤 1. Dis le mot dans ta langue";
  vcMsg("✔ Merci ! Ta voix est enregistrée. Tu peux en ajouter une autre.");toast("✔ Merci ! Contribution envoyée");renderDict();syncNow()}
@@ -557,11 +563,11 @@ $("vcRec").onclick=function(){
  navigator.mediaDevices.getUserMedia({audio:true}).then(function(st){
   var ch=[],mr=new MediaRecorder(st,{audioBitsPerSecond:24000});VC.rec=mr;
   mr.ondataavailable=function(e){if(e.data&&e.data.size)ch.push(e.data)};
-  mr.onstop=function(){clearTimeout(VC.t);st.getTracks().forEach(function(t){t.stop()});b.classList.remove("rec");b.textContent="🎤 Refaire l’enregistrement";
+  mr.onstop=function(){clearTimeout(VC.t);try{if(VC.sr)VC.sr.stop()}catch(e){}st.getTracks().forEach(function(t){t.stop()});b.classList.remove("rec");b.textContent="🎤 Refaire l’enregistrement";
    var blob=new Blob(ch,{type:mr.mimeType||"audio/webm"});
    if(!blob.size||blob.size>240000){toast(blob.size?"Trop long : 8 secondes maximum":"Rien enregistré, réessaie");VC.audio=null;$("vcPlay").hidden=true;return}
    var fr=new FileReader();fr.onload=function(){VC.audio={mime:(blob.type||"audio/webm").split(";")[0],b64:String(fr.result).split(",")[1]};$("vcPlay").hidden=false;vcMsg("✔ Ta voix est enregistrée. Écoute-la avec ▶, puis dis le sens.")};fr.readAsDataURL(blob)};
-  mr.start();b.classList.add("rec");b.textContent="⏹ Appuie pour arrêter";vcMsg("🎙️ Je t’écoute… dis le mot dans ta langue");
+  mr.start();VC.sr=dictate(null,$("vcWord"),true);b.classList.add("rec");b.textContent="⏹ Appuie pour arrêter";vcMsg("🎙️ Je t’écoute… dis le mot dans ta langue");
   VC.t=setTimeout(function(){if(mr.state==="recording")mr.stop()},8000)
  }).catch(function(){toast("Micro refusé : autorise-le pour ce site")})};
 $("vcPlay").onclick=function(){if(VC.audio)try{new Audio("data:"+VC.audio.mime+";base64,"+VC.audio.b64).play()}catch(e){}};
@@ -570,6 +576,7 @@ $("vcWordMic").onclick=function(){dictate(this,$("vcWord"))};
 $("vcLang").onchange=function(){this.setAttribute("data-v",this.value)};
 $("vcHelp").onclick=function(){speak("Étape un : appuie sur le premier micro et dis le mot dans ta langue. Étape deux : appuie sur le petit micro et dis ce que ça veut dire en français. Étape trois : coche l’accord, puis appuie sur envoyer.",L("fr"))};
 $("vcSend").onclick=sendVoice;
+Array.prototype.forEach.call(document.querySelectorAll("[data-mic]"),function(b){b.onclick=function(){dictate(b,$(b.getAttribute("data-mic")))}});
 $("vcList").onclick=function(){$("dictQ").value="";$("dictF").value="🔊 avec voix";renderDict();$("dictEntries").scrollIntoView({block:"start"});if(!getDict().some(function(x){return x.hasAudio||x.audio}))toast("Aucune contribution orale pour le moment")};
 
 refreshSel();renderDict();renderLangs();status();$("vmode").checked=!!ADMIN;$("vt").onclick=function(){var n=0,lc=0;try{speechSynthesis.getVoices().forEach(function(x){if(x.lang.toLowerCase().indexOf("fr")===0){n++;if(x.localService)lc++}})}catch(e){}toast(n?"Voix françaises : "+n+" ("+lc+" hors ligne). Écoute…":"Aucune voix française trouvée : installe-la dans Réglages > Synthèse vocale");speak("Bonjour, ceci est un test de la voix.",L("fr"))};try{initShare()}catch(e){}syncNow();setInterval(syncNow,90000);window.addEventListener("online",syncNow);
