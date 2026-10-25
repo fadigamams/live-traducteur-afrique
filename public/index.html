@@ -541,12 +541,12 @@ function altBox(input){var row=input.closest(".row")||input,b=row.nextElementSib
 function showAlts(box,input,res){box.innerHTML="";var seen={};seen[nz(input.value)]=1;
  for(var i=0;i<res.length&&i<4;i++){var t=res[i].transcript.trim();if(!t||seen[nz(t)])continue;seen[nz(t)]=1;(function(t){var b=document.createElement("button");b.type="button";b.className="btn2";b.textContent=t;b.onclick=function(){input.value=t;box.innerHTML=""};box.appendChild(b)})(t)}
  if(box.children.length){var l=document.createElement("small");l.textContent="Autres écritures possibles, touche la bonne :";box.insertBefore(l,box.firstChild)}}
-function dictate(btn,input,quiet){var R=window.SpeechRecognition||window.webkitSpeechRecognition;
+function dictate(btn,input,quiet,done){var R=window.SpeechRecognition||window.webkitSpeechRecognition;
  if(!R){if(!quiet)toast("Dictée non disponible ici : ouvre l’appli dans Chrome");return null}
  var r=new R(),box=altBox(input);r.lang="fr-FR";r.interimResults=true;r.continuous=false;r.maxAlternatives=4;box.innerHTML="";if(btn)btn.classList.add("rec");
  r.onresult=function(e){var t="";for(var i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;input.value=t;var last=e.results[e.results.length-1];if(last.isFinal)showAlts(box,input,last)};
- r.onerror=function(e){if(quiet&&e.error!=="not-allowed")return;toast(e.error=="not-allowed"?"Micro refusé : autorise-le pour ce site":e.error=="network"?"Pas de connexion : l’écriture automatique en a besoin":"Micro : "+e.error)};
- r.onend=function(){if(btn)btn.classList.remove("rec")};try{r.start()}catch(e){if(btn)btn.classList.remove("rec");return null}return r}
+ r.onerror=function(e){if(e.error==="aborted")return;if(e.error==="no-speech"){toast("Je n’ai rien entendu : appuie sur 🎤 et parle plus près");return}if(quiet&&e.error!=="not-allowed")return;toast(e.error=="not-allowed"?"Micro refusé : autorise-le pour ce site":e.error=="network"?"Pas de connexion : l’écriture automatique en a besoin":"Micro : "+e.error)};
+ r.onend=function(){if(btn)btn.classList.remove("rec");if(done)done(input.value.trim())};try{r.start()}catch(e){if(btn)btn.classList.remove("rec");return null}return r}
 function sendVoice(){
  var m=$("vcMeaning").value.trim().replace(/\s+/g," "),w=$("vcWord").value.trim().replace(/\s+/g," ")||PLH;
  if(!VC.audio){toast("Enregistre d’abord ta voix avec le micro 1");return}
@@ -566,8 +566,8 @@ $("vcRec").onclick=function(){
   mr.onstop=function(){clearTimeout(VC.t);try{if(VC.sr)VC.sr.stop()}catch(e){}st.getTracks().forEach(function(t){t.stop()});b.classList.remove("rec");b.textContent="🎤 Refaire l’enregistrement";
    var blob=new Blob(ch,{type:mr.mimeType||"audio/webm"});
    if(!blob.size||blob.size>240000){toast(blob.size?"Trop long : 8 secondes maximum":"Rien enregistré, réessaie");VC.audio=null;$("vcPlay").hidden=true;return}
-   var fr=new FileReader();fr.onload=function(){VC.audio={mime:(blob.type||"audio/webm").split(";")[0],b64:String(fr.result).split(",")[1]};$("vcPlay").hidden=false;vcMsg("✔ Ta voix est enregistrée. Écoute-la avec ▶, puis dis le sens.")};fr.readAsDataURL(blob)};
-  mr.start();VC.sr=dictate(null,$("vcWord"),true);b.classList.add("rec");b.textContent="⏹ Appuie pour arrêter";vcMsg("🎙️ Je t’écoute… dis le mot dans ta langue");
+   var fr=new FileReader();fr.onload=function(){VC.audio={mime:(blob.type||"audio/webm").split(";")[0],b64:String(fr.result).split(",")[1]};$("vcPlay").hidden=false;vcMsg("✔ Voix enregistrée ! Répète maintenant le mot une fois pour qu’il s’écrive…");setTimeout(function(){VC.sr=dictate($("vcWordMic"),$("vcWord"),false,function(v){vcMsg(v?"✔ Mot écrit. Corrige-le ou touche une autre écriture proposée, puis dis le sens en français.":"Je n’ai rien compris : appuie sur 🎤 à côté du mot et répète-le.")})},600)};fr.readAsDataURL(blob)};
+  mr.start();b.classList.add("rec");b.textContent="⏹ Appuie pour arrêter";vcMsg("🎙️ Je t’écoute… dis le mot dans ta langue");
   VC.t=setTimeout(function(){if(mr.state==="recording")mr.stop()},8000)
  }).catch(function(){toast("Micro refusé : autorise-le pour ce site")})};
 $("vcPlay").onclick=function(){if(VC.audio)try{new Audio("data:"+VC.audio.mime+";base64,"+VC.audio.b64).play()}catch(e){}};
