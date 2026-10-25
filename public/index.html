@@ -35,8 +35,10 @@ footer{padding:10px 12px 12px;background:var(--card);border-top:1px solid var(--
 .mic{flex:1;border:0;border-radius:16px;padding:16px 8px;font:inherit;font-weight:700;font-size:1rem;cursor:pointer;color:var(--accink)}
 .mic small{display:block;font-weight:400;opacity:.85}
 #ma{background:var(--acc)}#mb{background:var(--b);color:#1b1200}
-.mic.rec{animation:p 1s infinite}@keyframes p{50%{transform:scale(.96);box-shadow:0 0 0 6px rgba(255,80,80,.45)}}
-@media (prefers-reduced-motion:reduce){.mic.rec{animation:none;outline:3px solid #ff5050}}
+.mic.rec{animation:p 1s infinite}
+.orb{width:78px;height:78px;border-radius:50%;border:0;font-size:2.1rem;background:var(--acc);color:var(--accink);cursor:pointer;box-shadow:0 0 0 6px rgba(46,230,208,.25)}
+.orb.rec{animation:p 1s infinite;background:#ef4444;color:#fff;box-shadow:0 0 0 6px rgba(239,68,68,.3)}@keyframes p{50%{transform:scale(.96);box-shadow:0 0 0 6px rgba(255,80,80,.45)}}
+@media (prefers-reduced-motion:reduce){.mic.rec,.orb.rec{animation:none;outline:3px solid #ff5050}}
 .tx{display:flex;gap:6px;margin-top:10px}
 .tx button{font:inherit;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:0 12px;cursor:pointer}
 label.au{display:flex;align-items:center;gap:6px;color:var(--mut);font-size:.9rem;margin-top:8px}
@@ -68,11 +70,12 @@ h2{font-size:1.1rem;margin:0 0 6px}
 <header><select id="la" aria-label="Ma langue"></select><button class="ic" id="sw" aria-label="Inverser les langues">⇄</button><select id="lb" aria-label="Langue de l’interlocuteur"></select><button class="ic" id="hc" aria-label="Effacer l’historique">🗑</button></header>
 <div id="chat"><div class="empty" id="em">Appuie sur ton micro et parle : la traduction s’affiche et est lue à voix haute. Ton interlocuteur répond avec l’autre micro. Si le micro ne marche pas, écris le texte en bas.</div></div>
 <footer>
-<button class="mic" id="mc" style="width:100%;margin-bottom:10px;background:var(--bg);color:var(--ink);border:2px solid var(--acc)">🎧 Écoute continue<small>Conversation en direct, sans appuyer à chaque phrase</small></button>
-<div id="cbar" hidden><div class="row" style="align-items:center;margin-bottom:8px"><b id="cb" style="flex:1"></b><button class="ic" id="cf" aria-label="Changer de sens">⇄</button></div><label class="au" style="margin:0 0 10px"><input type="checkbox" id="alt" checked> Alterner le sens à chaque phrase (chacun son tour)</label></div>
+<div style="text-align:center;margin-bottom:10px"><button id="mc" class="orb" aria-label="Conversation vocale en direct">🎙️</button><div id="vstat" class="note" style="margin:6px 0 0">Appuie sur le micro et parle : traduction en direct, lue à voix haute</div></div>
+<div id="cbar" hidden><div class="row" style="align-items:center;margin-bottom:8px"><b id="cb" style="flex:1"></b><button class="ic" id="cf" aria-label="Changer de sens">⇄</button></div><label class="au" style="margin:0 0 10px"><input type="checkbox" id="alt"> Dialogue à deux : alterner la langue à chaque phrase</label></div>
 <div class="row"><button class="mic" id="ma">🎤 Moi<small id="na"></small></button><button class="mic" id="mb">🎤 Lui / Elle<small id="nb"></small></button></div>
 <div class="tx" style="flex-wrap:wrap"><input id="tx" placeholder="Ou écris ici…" aria-label="Texte à traduire" style="flex:1 1 100%"><button id="sa" style="flex:1;padding:12px 6px;font-size:.82rem" aria-label="Traduire de ma langue vers la sienne">→</button><button id="sb" style="flex:1;padding:12px 6px;font-size:.82rem" aria-label="Traduire de sa langue vers la mienne">←</button></div>
 <label class="au"><input type="checkbox" id="au" checked> Lire la traduction à voix haute</label>
+<button class="btn2" id="vt" style="margin:8px 0 0 0">🔊 Tester la voix</button>
 </footer>
 </section>
 
@@ -306,12 +309,12 @@ async function tr(txt,f,t){
 function speak(txt,l,cb){var done=false,fin=function(){if(!done){done=true;if(cb)cb()}},S=window.speechSynthesis;
  var vl=l;if(!can(l,"v")){vl=BASE[0]}
  if(!S||!window.SpeechSynthesisUtterance){toast("Voix non disponible ici");fin();return}
- try{if(S.speaking||S.pending)S.cancel();S.resume()}catch(e){}
+ try{S.cancel();S.resume()}catch(e){}
  var u=new SpeechSynthesisUtterance(txt),ok=false;u.lang=vl[0];u.volume=1;u.rate=.95;
- var v=S.getVoices().filter(function(x){return x.lang.toLowerCase().indexOf(vl[1])===0});if(v.length)u.voice=v[0];
+ var v=S.getVoices().filter(function(x){return x.lang.toLowerCase().indexOf(vl[1])===0});v.sort(function(a,b){return(b.localService?1:0)-(a.localService?1:0)});if(v.length)u.voice=v[0];window._u=u;
  u.onstart=function(){ok=true};u.onend=fin;u.onerror=function(e){fin();if(e.error!=="canceled"&&e.error!=="interrupted")toast("Voix bloquée : "+e.error)};
  setTimeout(function(){if(!ok&&!done)toast("Aucun son. Vérifie le volume et la voix « "+vl[2]+" » (Réglages > Synthèse vocale)")},2500);
- setTimeout(fin,Math.max(8000,txt.length*150));S.speak(u)}
+ setTimeout(fin,Math.max(8000,txt.length*150));setTimeout(function(){try{S.speak(u)}catch(e){fin()}},150)}
 
 
 // ---------- Base partagée (serveur) + secours hors ligne ----------
@@ -393,7 +396,7 @@ async function go(side,txt,el){
   if(r.src){var s=document.createElement("div");s.className="src";s.textContent=r.src;el.appendChild(s)}
   var b=document.createElement("button");b.className="sp";b.textContent="🔊";b.setAttribute("aria-label","Écouter");b.onclick=function(){speak(o,t)};el.appendChild(b);
   hist.push({s:side,o:txt,t:o,src:r.src});hist=hist.slice(-60);sv(HK,hist);
-  if($("au").checked)speak(o,t,resume);else resume();el.scrollIntoView({block:"end"})}
+  if($("au").checked){if(cont)vs("🔊 Lecture de la traduction…");speak(o,t,resume)}else resume();el.scrollIntoView({block:"end"})}
  catch(e){el.querySelector(".t").textContent=e.message==="NOMT"?(e.hints&&e.hints.length?"ℹ Phrase non traduite en entier. Mots connus dans Équipédia : "+e.hints.join(" ; ")+". Ajoute la phrase complète dans Équipédia pour la traduire.":"ℹ Pas de traduction automatique pour "+f[2]+" ⇄ "+t[2]+" : seul le dictionnaire Équipédia est utilisé. Ajoute ce mot dans Équipédia."):"⚠ Traduction impossible (réseau ?). Les mots d’Équipédia restent disponibles hors ligne.";resume()}}
 var SR=window.SpeechRecognition||window.webkitSpeechRecognition,cur=null;
 function sttOk(l){if(!SR){toast("Micro non disponible ici. Ouvre dans Chrome ou écris le texte.");return false}if(!can(l,"s")){toast("La reconnaissance vocale de "+l[2]+" n’est pas prise en charge : écris le texte.");return false}return true}
@@ -410,11 +413,12 @@ function listen(side){var l=L(side=="a"?A:B);
 var cont=false,dir="a",crec=null,cel=null,holding=false,lt=0,busyL=false;
 function cl(){return L(dir=="a"?A:B)}function ct(){return L(dir=="a"?B:A)}
 function banner(){$("cb").textContent="🎧 "+cl()[2]+" → "+ct()[2]}
-function resume(){if(cont&&holding){holding=false;run()}}
-function cstop(){cont=false;holding=false;$("mc").classList.remove("rec");$("cbar").hidden=true;try{if(crec)crec.stop()}catch(e){}if(cel){cel.remove();cel=null}}
-function cstart(){if(!sttOk(cl()))return;if(cur)cur.stop();cont=true;holding=false;dir="a";$("mc").classList.add("rec");$("cbar").hidden=false;banner();run()}
+function vs(t){$("vstat").textContent=t}
+function resume(){if(cont&&holding){holding=false;vs("🎙️ Je t’écoute… parle en "+cl()[2].split(" (")[0]);run()}}
+function cstop(){cont=false;holding=false;$("mc").classList.remove("rec");$("cbar").hidden=true;vs("Appuie sur le micro et parle : traduction en direct, lue à voix haute");try{if(crec)crec.stop()}catch(e){}if(cel){cel.remove();cel=null}}
+function cstart(){if(!sttOk(cl()))return;if(cur)cur.stop();cont=true;holding=false;dir="a";$("mc").classList.add("rec");$("cbar").hidden=false;banner();vs("🎙️ Je t’écoute… parle en "+cl()[2].split(" (")[0]);run()}
 function livetr(txt){var n=Date.now();if(busyL||n-lt<1200||txt.length<4)return;lt=n;busyL=true;var el=cel;tr(txt,cl(),ct()).then(function(o){if(el&&cont&&el.classList.contains("live"))el.querySelector(".t").textContent=o.text}).catch(function(){}).then(function(){busyL=false})}
-function commit(side,text){holding=true;var el=cel||bubble(side);cel=null;if($("alt").checked){dir=dir=="a"?"b":"a";banner()}go(side,text,el)}
+function commit(side,text){holding=true;vs("🌐 Traduction…");var el=cel||bubble(side);cel=null;if($("alt").checked&&can(L(dir=="a"?B:A),"s")){dir=dir=="a"?"b":"a";banner()}go(side,text,el)}
 function run(){
  if(!cont||holding)return;
  if(!sttOk(cl())){cstop();return}
@@ -436,6 +440,6 @@ function send(side){var v=$("tx").value.trim();if(!v)return;$("tx").value="";go(
 $("sa").onclick=function(){send("a")};$("sb").onclick=function(){send("b")};
 $("tx").onkeydown=function(e){if(e.key=="Enter")send("a")};
 
-refreshSel();renderDict();renderLangs();status();$("vmode").checked=!!ADMIN;try{initShare()}catch(e){}syncNow();setInterval(syncNow,90000);window.addEventListener("online",syncNow);
+refreshSel();renderDict();renderLangs();status();$("vmode").checked=!!ADMIN;$("vt").onclick=function(){var n=0,lc=0;try{speechSynthesis.getVoices().forEach(function(x){if(x.lang.toLowerCase().indexOf("fr")===0){n++;if(x.localService)lc++}})}catch(e){}toast(n?"Voix françaises : "+n+" ("+lc+" hors ligne). Écoute…":"Aucune voix française trouvée : installe-la dans Réglages > Synthèse vocale");speak("Bonjour, ceci est un test de la voix.",L("fr"))};try{initShare()}catch(e){}syncNow();setInterval(syncNow,90000);window.addEventListener("online",syncNow);
 if(window.speechSynthesis)speechSynthesis.getVoices();
 </script></body></html>
