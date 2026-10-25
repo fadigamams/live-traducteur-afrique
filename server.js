@@ -25,7 +25,8 @@ create table if not exists entries(id text primary key, word text not null, lang
  status text not null default 'en attente', reports int default 0, created_at timestamptz default now(), updated_at timestamptz default now());
 create table if not exists fixes(id serial primary key, entry_id text references entries(id) on delete cascade, text text not null, created_at timestamptz default now());
 create table if not exists langs(code text primary key, name text not null, alt text default '', region text default '', descr text default '', created_at timestamptz default now());
-create index if not exists e_word on entries(lower(word));`;
+create index if not exists e_word on entries(lower(word));
+create table if not exists edits(id serial primary key, entry_id text, before jsonb, created_at timestamptz default now());`;
 const SEL = `select e.id,e.word,e.lang,e.meaning,e.target,e.example,e.ctx,e.pron,e.region,e.variants,e.others,e.cues,e.status,e.reports,
  e.created_at as "createdAt", e.updated_at as "updatedAt",
  (select coalesce(json_agg(json_build_object('text',f.text,'date',f.created_at) order by f.id),'[]'::json) from fixes f where f.entry_id=e.id) as fixes from entries e`;
@@ -71,11 +72,30 @@ app.post("/api/langs", limit, async (q, s) => {
 });
 // --- modération (clé secrète ADMIN_KEY, jamais dans le HTML) ---
 app.get("/api/admin/check", need, (q, s) => s.json({ ok: true }));
+const EDITABLE = { word: 200, meaning: 300, lang: 40, target: 40, example: 300, ctx: 200, pron: 100, region: 100, variants: 200, others: 500, cues: 200 };
+const STATUTS = ["en attente", "validé", "refusé", "à corriger"];
+// modification par un modérateur : effective tout de suite, ancienne version conservée dans "edits"
 app.patch("/api/entries/:id", need, async (q, s) => {
   try {
-    const st = (q.body || {}).status;
-    if (!["en attente", "validé", "refusé", "à corriger"].includes(st)) return s.status(400).json({ error: "Statut invalide" });
-    await pool.query("update entries set status=$2, updated_at=now() where id=$1", [q.params.id, st]); s.json({ ok: true });
+    const b = q.body || {}, sets = [], vals = [q.params.id], nv = {};
+    const old = await pool.query("select * from entries where id=$1", [q.params.id]);
+    if (!old.rows.length) return s.status(404).json({ error: "Mot introuvable" });
+    if (b.status !== undefined) {
+      if (!STATUTS.includes(b.status)) return s.status(400).json({ error: "Statut invalide" });
+      vals.push(b.status); sets.push("status=$" + vals.length);
+    }
+    for (const k of Object.keys(EDITABLE)) {
+      if (b[k] === undefined) continue;
+      const v = clean(b[k], EDITABLE[k]);
+      if (["word", "meaning", "lang", "target"].includes(k) && !v) return s.status(400).json({ error: "Champ obligatoire vide : " + k });
+      nv[k] = v; vals.push(v); sets.push(k + "=$" + vals.length);
+    }
+    if (!sets.length) return s.status(400).json({ error: "Rien à modifier" });
+    const m = { ...old.rows[0], ...nv };
+    if (m.lang === m.target) return s.status(400).json({ error: "Langues identiques" });
+    await pool.query("insert into edits(entry_id,before) values($1,$2::jsonb)", [q.params.id, JSON.stringify(old.rows[0])]);
+    await pool.query("update entries set " + sets.join(",") + ", updated_at=now() where id=$1", vals);
+    s.json({ ok: true });
   } catch (e) { fail(s, e); }
 });
 app.delete("/api/entries/:id", need, async (q, s) => { // suppression douce : récupérable

@@ -108,6 +108,7 @@ if(document.readyState==="complete")go();else window.addEventListener("load",go)
 <section class="view" id="ve"><div class="scroll">
  <h2>🌍 Équipédia — dictionnaire communautaire</h2>
  <p class="note">Mots et expressions des langues africaines et du nouchi, enrichis par la communauté.</p><p class="note" id="net"></p>
+ <div id="editbar" class="note" hidden style="color:var(--b);font-weight:700">✏️ Modification de <span id="edname"></span> <button class="btn2" id="edcancel" style="margin:0 0 0 6px">Annuler</button><label class="au" style="margin-top:4px"><input type="checkbox" id="edval" checked> Valider aussi cette entrée</label></div>
  <div class="grid">
   <select id="dictLang" aria-label="Langue du mot"></select>
   <select id="dictTarget" aria-label="Langue de la traduction"></select>
@@ -218,11 +219,29 @@ function addEntry(e){
  if(!saveDict(items))return false;
  toast(other?"Enregistré (autre sens du même mot)":"✔ Enregistré dans Équipédia");syncNow();return true}
 $("dictAdd").onclick=function(){
+ if(EDIT){saveEdit();return}
  var ok=addEntry({word:$("dictWord").value,meaning:$("dictMeaning").value,lang:$("dictLang").value,target:$("dictTarget").value,example:$("dictExample").value.trim(),ctx:$("dictCtx").value.trim(),cues:$("dictCue").value.trim(),pron:$("dictPron").value.trim(),region:$("dictReg").value.trim(),variants:$("dictVar").value.trim(),others:$("dictOther").value.trim()});
  if(ok){["dictWord","dictMeaning","dictExample","dictCue","dictCtx","dictPron","dictReg","dictVar","dictOther"].forEach(function(i){$(i).value=""});$("dictQ").value="";$("dictF").value="";renderDict()}};
 function upd(id,fn){var it=getDict();for(var i=0;i<it.length;i++)if(it[i].id===id){fn(it[i]);it[i].updatedAt=new Date().toISOString()}saveDict(it);renderDict()}
 function delEntry(id){var it=getDict(),k=-1;it.forEach(function(x,i){if(x.id===id)k=i});if(k<0)return;var tr0=ld("lt_trash",[]);tr0.push(it[k]);sv("lt_trash",tr0.slice(-30));it.splice(k,1);saveDict(it);renderDict();toast("Supprimé — tu peux le restaurer")}
 function restoreEntry(){var tr0=ld("lt_trash",[]),x=tr0.pop();if(!x)return;var it=getDict();if(!it.some(function(y){return y.id===x.id}))it.push(x);saveDict(it);sv("lt_trash",tr0);renderDict();toast("Mot restauré : "+x.word)}
+var EDIT=null;
+function resetForm(){["dictWord","dictMeaning","dictExample","dictCue","dictCtx","dictPron","dictReg","dictVar","dictOther"].forEach(function(i){$(i).value=""});EDIT=null;$("dictAdd").textContent="Ajouter";$("editbar").hidden=true}
+function editEntry(x){EDIT=x.id;
+ $("dictLang").value=x.lang;$("dictLang").setAttribute("data-v",x.lang);$("dictTarget").value=x.target;$("dictTarget").setAttribute("data-v",x.target);
+ $("dictWord").value=x.word;$("dictMeaning").value=x.meaning;$("dictExample").value=x.example||"";$("dictCtx").value=x.ctx||"";$("dictPron").value=x.pron||"";$("dictReg").value=x.region||"";$("dictVar").value=x.variants||"";$("dictCue").value=x.cues||"";$("dictOther").value=x.others||"";
+ $("edval").checked=!x.local;$("dictAdd").textContent="💾 Enregistrer la modification";$("edname").textContent="« "+x.word+" »";$("editbar").hidden=false;$("editbar").scrollIntoView({block:"center"})}
+async function saveEdit(){
+ var id=EDIT,x=getRaw().filter(function(y){return y.id===id})[0];if(!x){resetForm();return}
+ var f={word:$("dictWord").value.trim().replace(/\s+/g," "),meaning:$("dictMeaning").value.trim().replace(/\s+/g," "),lang:$("dictLang").value,target:$("dictTarget").value,example:$("dictExample").value.trim(),ctx:$("dictCtx").value.trim(),pron:$("dictPron").value.trim(),region:$("dictReg").value.trim(),variants:$("dictVar").value.trim(),cues:$("dictCue").value.trim(),others:$("dictOther").value.trim()};
+ if(!nz(f.word)||!nz(f.meaning)){toast("Renseigne le mot et sa traduction");return}
+ if(f.lang===f.target){toast("Choisis deux langues différentes");return}
+ if(!x.local){
+  if(!(await askAdmin()))return;
+  if($("edval").checked)f.status="validé";
+  try{await api("PATCH","/entries/"+id,f)}catch(e){toast(e.status===401?"Clé modérateur refusée":"Modification impossible ("+(e.status||"réseau")+") : réessaie dans 1 minute");return}}
+ var c=getRaw();c.forEach(function(y){if(y.id===id){Object.keys(f).forEach(function(k){y[k]=f[k]});y.updatedAt=new Date().toISOString()}});saveDict(c);
+ resetForm();renderDict();toast("✔ Modification enregistrée, active tout de suite");if(!x.local)pull().catch(function(){})}
 function renderDict(){
  $("dtr").hidden=!ld("lt_trash",[]).length;
  var box=$("dictEntries"),q=nk($("dictQ").value),f=$("dictF").value,vm=$("vmode").checked&&!!ADMIN;box.innerHTML="";
@@ -240,10 +259,11 @@ function renderDict(){
   function bt(t,fn){var k=document.createElement("button");k.className="btn2";k.textContent=t;k.onclick=fn;d.appendChild(k)}
   bt("✎ Proposer une correction",function(){var t=prompt("Quelle correction proposes-tu pour « "+x.word+" » ?");if(t&&t.trim()){upd(x.id,function(e){e.fixes=(e.fixes||[]).concat([{text:t.trim(),date:new Date().toISOString()}])});queueOp({t:"fix",id:x.id,text:t.trim()})}});
   bt("⚑ Signaler",function(){upd(x.id,function(e){e.reports=(e.reports||0)+1;if(e.status==="validé")e.status="à corriger"});queueOp({t:"report",id:x.id});toast("Signalement enregistré")});
+  if(vm||x.local)bt("✏️ Modifier",function(){editEntry(x)});
   bt("🗑 Supprimer",function(){delClick(x)});
   if(vm){[["✔ Valider","validé"],["✖ Refuser","refusé"],["⚠ À corriger","à corriger"]].forEach(function(a){bt(a[0],function(){modCall("PATCH","/entries/"+x.id,{status:a[1]})})});if(x.status==="supprimé")bt("↩ Rétablir",function(){modCall("PATCH","/entries/"+x.id,{status:"en attente"})})}
   box.appendChild(d)})}
-$("dtr").onclick=restoreEntry;$("dictQ").oninput=renderDict;$("dictF").onchange=renderDict;$("vmode").onchange=async function(){var me=this;
+$("dtr").onclick=restoreEntry;$("edcancel").onclick=resetForm;$("dictQ").oninput=renderDict;$("dictF").onchange=renderDict;$("vmode").onchange=async function(){var me=this;
  if(!me.checked){ADMIN="";try{sessionStorage.removeItem("lt_admin");localStorage.removeItem("lt_admin")}catch(e){}renderDict();return}
  if(!(await askAdmin()))me.checked=false;renderDict()};
 $("dx").onclick=function(){var u=URL.createObjectURL(new Blob([JSON.stringify({dict:getDict(),langs:CUSTOM},null,1)],{type:"application/json"})),a=document.createElement("a");a.href=u;a.download="equipedia-sauvegarde.json";a.click();setTimeout(function(){URL.revokeObjectURL(u)},4000)};
