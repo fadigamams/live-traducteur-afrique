@@ -2,7 +2,15 @@
   "name": "live-traducteur-afrique",
   "version": "1.0.0",
   "private": true,
-  "scripts": { "start": "node server.js" },
-  "engines": { "node": ">=18" },
-  "dependencies": { "express": "4.21.2", "pg": "8.13.1" }
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "4.21.2",
+    "pg": "8.13.1"
+  },
+  "description": "TAL – Traduction Africaine des Langues"
 }

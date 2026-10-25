@@ -84,5 +84,5 @@ app.delete("/api/entries/:id", need, async (q, s) => { // suppression douce : r√
 
 app.use(express.static(path.join(__dirname, "public"), { maxAge: 0 }));
 const port = process.env.PORT || 3000;
-pool.query(INIT).then(() => app.listen(port, () => console.log("Live Traducteur Afrique sur le port " + port)))
+pool.query(INIT).then(() => app.listen(port, () => console.log("TAL sur le port " + port)))
   .catch(e => { console.error("Base de donn√©es inaccessible :", e.message); process.exit(1); });
