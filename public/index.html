@@ -23,20 +23,20 @@ textarea{min-height:60px;resize:vertical}
 .ic{flex:none;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:1.2rem;cursor:pointer}
 #chat{flex:1;overflow-y:auto;padding:8px 12px;display:flex;flex-direction:column;gap:10px}
 .empty{margin:auto;text-align:center;color:var(--mut);padding:20px}
-.m{max-width:85%;padding:10px 12px;border-radius:16px;background:var(--card);border:1px solid var(--line)}
+.m{max-width:94%;padding:10px 12px;border-radius:16px;background:var(--card);border:1px solid var(--line)}
 .m.a{align-self:flex-end;border-bottom-right-radius:4px;border-color:var(--acc)}
 .m.b{align-self:flex-start;border-bottom-left-radius:4px;border-color:var(--b)}
-.o{font-size:.85rem;color:var(--mut)}.t{font-size:1.2rem;font-weight:600;margin-top:2px}
+.o{font-size:.85rem;color:var(--mut)}.t{font-size:1.4rem;font-weight:600;margin-top:2px;line-height:1.35}
 .src{font-size:.78rem;color:var(--b);margin-top:2px}
 .sp{background:none;border:0;color:var(--mut);cursor:pointer;font-size:1.1rem;padding:4px 0 0}
 .live .o{font-style:italic}
-footer{padding:10px 12px 12px;background:var(--card);border-top:1px solid var(--line)}
+footer{padding:8px 12px 8px;background:var(--card);border-top:1px solid var(--line)}
 .row{display:flex;gap:10px}
 .mic{flex:1;border:0;border-radius:16px;padding:16px 8px;font:inherit;font-weight:700;font-size:1rem;cursor:pointer;color:var(--accink)}
 .mic small{display:block;font-weight:400;opacity:.85}
 #ma{background:var(--acc)}#mb{background:var(--b);color:#1b1200}
 .mic.rec{animation:p 1s infinite}
-.orb{width:78px;height:78px;border-radius:50%;border:0;font-size:2.1rem;background:var(--acc);color:var(--accink);cursor:pointer;box-shadow:0 0 0 6px rgba(46,230,208,.25)}
+.orb{flex:none;width:64px;height:64px;border-radius:50%;border:0;font-size:1.8rem;background:var(--acc);color:var(--accink);cursor:pointer;box-shadow:0 0 0 6px rgba(46,230,208,.25)}
 .orb.rec{animation:p 1s infinite;background:#ef4444;color:#fff;box-shadow:0 0 0 6px rgba(239,68,68,.3)}@keyframes p{50%{transform:scale(.96);box-shadow:0 0 0 6px rgba(255,80,80,.45)}}
 @media (prefers-reduced-motion:reduce){.mic.rec,.orb.rec{animation:none;outline:3px solid #ff5050}}
 .tx{display:flex;gap:6px;margin-top:10px}
@@ -70,12 +70,15 @@ h2{font-size:1.1rem;margin:0 0 6px}
 <header><select id="la" aria-label="Ma langue"></select><button class="ic" id="sw" aria-label="Inverser les langues">⇄</button><select id="lb" aria-label="Langue de l’interlocuteur"></select><button class="ic" id="hc" aria-label="Effacer l’historique">🗑</button></header>
 <div id="chat"><div class="empty" id="em">Appuie sur ton micro et parle : la traduction s’affiche et est lue à voix haute. Ton interlocuteur répond avec l’autre micro. Si le micro ne marche pas, écris le texte en bas.</div></div>
 <footer>
-<div style="text-align:center;margin-bottom:10px"><button id="mc" class="orb" aria-label="Conversation vocale en direct">🎙️</button><div id="vstat" class="note" style="margin:6px 0 0">Appuie sur le micro et parle : traduction en direct, lue à voix haute</div></div>
-<div id="cbar" hidden><div class="row" style="align-items:center;margin-bottom:8px"><b id="cb" style="flex:1"></b><button class="ic" id="cf" aria-label="Changer de sens">⇄</button></div><label class="au" style="margin:0 0 10px"><input type="checkbox" id="alt"> Dialogue à deux : alterner la langue à chaque phrase</label></div>
-<div class="row"><button class="mic" id="ma">🎤 Moi<small id="na"></small></button><button class="mic" id="mb">🎤 Lui / Elle<small id="nb"></small></button></div>
-<div class="tx" style="flex-wrap:wrap"><input id="tx" placeholder="Ou écris ici…" aria-label="Texte à traduire" style="flex:1 1 100%"><button id="sa" style="flex:1;padding:12px 6px;font-size:.82rem" aria-label="Traduire de ma langue vers la sienne">→</button><button id="sb" style="flex:1;padding:12px 6px;font-size:.82rem" aria-label="Traduire de sa langue vers la mienne">←</button></div>
+<div class="row" style="align-items:center;gap:12px"><button id="mc" class="orb" aria-label="Conversation vocale en direct">🎙️</button><div style="flex:1;min-width:0"><div id="vstat" class="note" style="margin:0;font-size:.9rem">Appuie sur le micro et parle : traduction en direct, lue à voix haute</div><div id="cbar" hidden><b id="cb"></b> <button class="btn2" id="cf" style="margin:4px 0 0 0">⇄ Changer de sens</button></div></div></div>
+<div class="tx"><input id="tx" placeholder="Ou écris ici…" aria-label="Texte à traduire"><button id="sa" style="padding:0 16px;font-size:1.1rem" aria-label="Traduire">➤</button></div>
+<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--mut);font-size:.9rem">Plus d’options : 2 micros, sens inverse, voix</summary>
+<label class="au"><input type="checkbox" id="alt"> Dialogue à deux : alterner la langue à chaque phrase</label>
+<div class="row" style="margin-top:8px"><button class="mic" id="ma" style="padding:10px 6px">🎤 Moi<small id="na"></small></button><button class="mic" id="mb" style="padding:10px 6px">🎤 Lui / Elle<small id="nb"></small></button></div>
+<div class="tx"><button id="sb" style="flex:1;padding:12px 6px;font-size:.82rem" aria-label="Traduire dans l’autre sens">←</button></div>
 <label class="au"><input type="checkbox" id="au" checked> Lire la traduction à voix haute</label>
 <button class="btn2" id="vt" style="margin:8px 0 0 0">🔊 Tester la voix</button>
+</details>
 </footer>
 </section>
 
@@ -161,7 +164,7 @@ function can(l,k){return l[3].indexOf(k)>=0}
 var A="fr",B="dyu",ss=ld("lt2",null);if(ss){A=ss[0];B=ss[1]}
 function fill(sel,val){sel.innerHTML="";allLangs().forEach(function(l){var o=document.createElement("option");o.value=l[1];o.textContent=lbl(l);sel.appendChild(o)});sel.value=val}
 function refreshSel(){fill($("la"),A);fill($("lb"),B);fill($("dictLang"),$("dictLang").getAttribute("data-v")||"nouchi");fill($("dictTarget"),$("dictTarget").getAttribute("data-v")||"fr");lab()}
-function lab(){$("na").textContent=L(A)[2];$("nb").textContent=L(B)[2];$("sa").textContent=L(A)[2].split(" (")[0]+" → "+L(B)[2].split(" (")[0];$("sb").textContent=L(B)[2].split(" (")[0]+" → "+L(A)[2].split(" (")[0];sv("lt2",[A,B])}
+function lab(){$("na").textContent=L(A)[2];$("nb").textContent=L(B)[2];$("sa").setAttribute("aria-label",L(A)[2]+" → "+L(B)[2]);$("tx").placeholder="Écrire en "+L(A)[2].split(" (")[0]+" ➤ "+L(B)[2].split(" (")[0];$("sb").textContent="← Sens inverse : "+L(B)[2].split(" (")[0]+" → "+L(A)[2].split(" (")[0];sv("lt2",[A,B])}
 $("la").onchange=function(){A=this.value;lab()};$("lb").onchange=function(){B=this.value;lab()};
 $("sw").onclick=function(){var t=A;A=B;B=t;$("la").value=A;$("lb").value=B;lab()};
 $("dictLang").onchange=function(){this.setAttribute("data-v",this.value)};$("dictTarget").onchange=function(){this.setAttribute("data-v",this.value)};
