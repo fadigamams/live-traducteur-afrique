@@ -102,7 +102,7 @@ if(seen){s.remove();return}try{sessionStorage.setItem("tal_splash","1")}catch(e)
 var t0=Date.now(),done=false;function hide(){if(done)return;done=true;s.classList.add("off");setTimeout(function(){s.remove()},600)}
 function go(){setTimeout(hide,Math.max(0,1800-(Date.now()-t0)))}
 if(document.readyState==="complete")go();else window.addEventListener("load",go);setTimeout(hide,3800);s.onclick=hide})();</script>
-<div id="brand"><i></i><b>TAL</b><span>Traduction Africaine des Langues</span><small id="ver" style="margin-left:auto;color:var(--mut);font-size:.65rem">v20</small></div>
+<div id="brand"><i></i><b>TAL</b><span>Traduction Africaine des Langues</span><small id="ver" style="margin-left:auto;color:var(--mut);font-size:.65rem">v21</small></div>
 <nav role="tablist" aria-label="Rubriques">
  <button role="tab" id="tb-c" data-v="vc" aria-selected="true">🎙️ Causerie</button>
  <button role="tab" id="tb-e" data-v="ve" aria-selected="false">🌍 Équipédia</button>
@@ -254,9 +254,9 @@ function addEntry(e){
  var w=nz(e.word),m=nz(e.meaning);
  if(!w||!m){toast("Renseigne le mot et sa traduction");return false}
  if(e.lang===e.target){toast("Choisis deux langues différentes");return false}
- var items=getDict(),dup=items.filter(function(x){return nk(x.word)===nk(w)&&x.lang===e.lang&&x.target===e.target&&nk(x.meaning)===nk(m)&&x.status!=="refusé"});
+ var items=getDict(),dup=items.filter(function(x){return kk(x.word,x.lang)===kk(w,e.lang)&&x.lang===e.lang&&x.target===e.target&&nk(x.meaning)===nk(m)&&x.status!=="refusé"});
  if(dup.length){toast("Ce mot avec ce sens existe déjà");return false}
- var other=items.some(function(x){return nk(x.word)===nk(w)&&x.lang===e.lang&&x.target===e.target});
+ var other=items.some(function(x){return kk(x.word,x.lang)===kk(w,e.lang)&&x.lang===e.lang&&x.target===e.target});
  var now=new Date().toISOString();
  items.push({id:"e"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),word:e.word.trim().replace(/\s+/g," "),lang:e.lang,meaning:e.meaning.trim().replace(/\s+/g," "),target:e.target,example:e.example||"",cues:e.cues||"",ctx:e.ctx||"",pron:e.pron||"",region:e.region||"",variants:e.variants||"",others:e.others||"",status:"en attente",createdAt:now,updatedAt:now,fixes:[],reports:0,local:true});
  if(!saveDict(items))return false;
@@ -287,8 +287,8 @@ async function saveEdit(){
  resetForm();renderDict();toast("✔ Modification enregistrée, active tout de suite");if(!x.local)pull().catch(function(){})}
 function renderDict(){
  $("dtr").hidden=!ld("lt_trash",[]).length;
- var box=$("dictEntries"),q=nk($("dictQ").value),f=$("dictF").value,vm=$("vmode").checked&&!!ADMIN;box.innerHTML="";
- var items=(f==="supprimé"?getRaw():getDict()).slice().reverse().filter(function(x){return(!f||(f==="🎧 à transcrire"?x.word===PLH:f==="🔊 avec voix"?!!(x.hasAudio||x.audio):x.status===f))&&(!q||nk(x.word).indexOf(q)>=0||nk(x.meaning).indexOf(q)>=0||nk(x.variants).indexOf(q)>=0)});
+ var box=$("dictEntries"),q=nk($("dictQ").value),pq=phon($("dictQ").value),f=$("dictF").value,vm=$("vmode").checked&&!!ADMIN;box.innerHTML="";
+ var items=(f==="supprimé"?getRaw():getDict()).slice().reverse().filter(function(x){return(!f||(f==="🎧 à transcrire"?x.word===PLH:f==="🔊 avec voix"?!!(x.hasAudio||x.audio):x.status===f))&&(!q||nk(x.word).indexOf(q)>=0||(pq&&isLoc(x.lang)&&kk(x.word,x.lang).indexOf(pq)>=0)||nk(x.meaning).indexOf(q)>=0||nk(x.variants).indexOf(q)>=0)});
  if(!items.length){var d=document.createElement("div");d.className="entry";d.textContent=getDict().length?"Aucun résultat.":"Aucun mot enregistré pour le moment. Ajoute le premier !";box.appendChild(d);return}
  items.forEach(function(x){
   var d=document.createElement("div");d.className="entry";
@@ -337,10 +337,22 @@ function splitSenses(m){var out=[],cur="",dp=0,s=String(m);
  out.push(cur);
  return out.map(function(z){var mm=z.match(/^(.*?)\s*[(\[]([^)\]]*)[)\]]\s*$/);return mm?{d:mm[1].trim(),cues:mm[2]}:{d:z.trim(),cues:""}}).filter(function(z){return z.d})}
 function senses(x){return /[(\[]/.test(x.meaning)?splitSenses(x.meaning):[{d:x.meaning,cues:""}]}
-function dictFind(txt,f,t){var k=nk(txt),hits=[],rk={"validé":2,"en attente":1};
- getDict().forEach(function(x){if(x.status==="refusé"||x.word===PLH)return;var r=rk[x.status]||0;
-  if(x.lang===f[1]&&x.target===t[1]&&nk(x.word)===k)senses(x).forEach(function(z){hits.push({text:z.d,r:r})});
-  else if(x.target===f[1]&&x.lang===t[1]&&senses(x).some(function(z){return nk(z.d)===k}))hits.push({text:x.word,r:r})});
+function isLoc(code){return L(code)[3].indexOf("s")<0}
+// Clé phonétique (orthographe à la française) : « dohi », « doï », « dohy », « dauhi » donnent la même clé
+function phon(s){return nk(s).split(" ").map(function(w){
+ w=w.replace(/dj|j/g,"J").replace(/tch|ch|sh/g,"C").replace(/ph/g,"f").replace(/gn/g,"N").replace(/qu|q|ck|k/g,"k").replace(/c(?=[eiy])/g,"s").replace(/c/g,"k")
+  .replace(/eau|au/g,"o").replace(/ou|w/g,"u").replace(/ai|ei|ey|ay/g,"e").replace(/y/g,"i").replace(/x/g,"ks").replace(/z/g,"s").replace(/h/g,"").replace(/(.)\1+/g,"$1");
+ if(w.length>=4)w=w.replace(/s$/,"");return w}).join("")}
+function kk(s,code){return isLoc(code)?phon(s):nk(s)}
+function lev1(a,b){if(a===b)return true;var la=a.length,lb=b.length;if(Math.abs(la-lb)>1)return false;var i=0;while(i<la&&i<lb&&a[i]===b[i])i++;
+ if(la===lb)return a.slice(i+1)===b.slice(i+1);if(la>lb)return a.slice(i+1)===b.slice(i);return a.slice(i)===b.slice(i+1)}
+function nearKey(pairs,key){if(key.length<5)return null;var c=Object.keys(pairs).filter(function(k){return k.length>=5&&lev1(k,key)});return c.length===1?c[0]:null}
+function dictFind(txt,f,t){var k=kk(txt,f[1]),loc=isLoc(f[1]),hits=[],rk={"validé":2,"en attente":1};
+ function scan(near){getDict().forEach(function(x){if(x.status==="refusé"||x.word===PLH)return;var r=rk[x.status]||0;
+  var m=function(s){var a=kk(s,f[1]);return near?(a.length>=5&&lev1(a,k)):a===k};
+  if(x.lang===f[1]&&x.target===t[1]&&m(x.word))senses(x).forEach(function(z){hits.push({text:z.d,r:r})});
+  else if(x.target===f[1]&&x.lang===t[1]&&senses(x).some(function(z){return m(z.d)}))hits.push({text:x.word,r:r})})}
+ scan(false);if(!hits.length&&loc)scan(true);
  if(!hits.length)return null;var mr=Math.max.apply(null,hits.map(function(x){return x.r})),tx=[];
  hits.forEach(function(x){if(x.r===mr&&tx.indexOf(x.text)<0)tx.push(x.text)});
  return {text:tx[0],alts:tx.slice(1),status:mr===2?"validé":"en attente"}}
@@ -363,14 +375,17 @@ function choose(c,ctx){
  return {d:u[0].d,amb:1,alts:u.slice(1).map(function(x){return x.d})}}
 function dictSub(txt,f,t){
  var pairs={},rk={"validé":2,"en attente":1},maxn=1;
- function add(s,o){var k=nk(s);(pairs[k]=pairs[k]||[]).push(o);maxn=Math.max(maxn,k.split(" ").length)}
+ function add(s,o){var k=kk(s,f[1]);(pairs[k]=pairs[k]||[]).push(o);maxn=Math.max(maxn,nk(s).split(" ").length+(isLoc(f[1])?1:0))}
  getDict().forEach(function(x){if(x.status==="refusé"||x.word===PLH)return;var r=rk[x.status]||0;
   if(x.lang===f[1]&&x.target===t[1])senses(x).forEach(function(z){add(x.word,{d:z.d,r:r,cues:cueList(z.cues+","+(x.cues||""))})});
   else if(x.target===f[1]&&x.lang===t[1])senses(x).forEach(function(z){add(z.d,{d:x.word,r:r,cues:[]})})});
  var tk=String(txt).trim().split(/\s+/),ctx=tk.map(function(w){return nk(w)}),out=[],hit=0,amb=[],i=0;
  tk.forEach(function(w,ix){if(ix>0&&/^\p{Lu}\p{L}+$/u.test(w))ctx.push("personne")});
- while(i<tk.length){var cands=null,n;
-  for(n=Math.min(maxn,tk.length-i);n>=1;n--){var p=pairs[nk(tk.slice(i,i+n).join(" "))];if(p){cands=p;break}}
+ function look(i){var n,key,p,loc=isLoc(f[1]);
+  for(n=Math.min(maxn,tk.length-i);n>=1;n--){key=kk(tk.slice(i,i+n).join(" "),f[1]);p=pairs[key];if(p)return {c:p,n:n}}
+  if(loc)for(n=Math.min(maxn,tk.length-i);n>=1;n--){key=kk(tk.slice(i,i+n).join(" "),f[1]);var q2=nearKey(pairs,key);if(q2)return {c:pairs[q2],n:n}}
+  return null}
+ while(i<tk.length){var lk=look(i),cands=lk?lk.c:null,n=lk?lk.n:0;
   if(cands){var pk=choose(cands,ctx);if(pk.amb)amb.push("« "+tk.slice(i,i+n).join(" ")+" » = "+pk.d+" (autre sens : "+pk.alts.join(", ")+")");out.push(pk.d);hit++;i+=n}else{out.push(tk[i]);i++}}
  var res=[];out.forEach(function(w){if(!res.length||nk(res[res.length-1])!==nk(w))res.push(w)});
  return {text:res.join(" "),hit:hit,amb:amb}}
