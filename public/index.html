@@ -79,11 +79,12 @@ footer.dock{padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px))}
 .mic.side{flex:1;min-width:0;padding:9px 4px;font-size:.88rem;line-height:1.25;border-radius:14px}
 .mic.side small{font-size:.7rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .orb{width:72px;height:72px;font-size:2rem}
-.chips{display:flex;gap:6px;margin-top:8px}
+.chips{display:flex;gap:4px;margin-top:8px}
+@media (max-width:340px){.chip em{font-size:.54rem;letter-spacing:-.3px;white-space:normal;text-align:center;line-height:1}.chip span{font-size:1rem}}
 .chip{flex:1;position:relative;display:block;font:inherit;padding:0;border:0;background:none;cursor:pointer;color:var(--ink);min-width:0}
 .chip input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
 .chip span{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;height:100%;border:1px solid var(--line);border-radius:12px;background:var(--bg);font-size:1.1rem;line-height:1.1}
-.chip em{font-style:normal;font-size:.68rem;color:var(--mut);white-space:nowrap}
+.chip em{font-style:normal;font-size:.62rem;color:var(--mut);white-space:nowrap;letter-spacing:-.2px}
 .chip input:checked+span{background:var(--acc);border-color:var(--acc)}
 .chip input:checked+span em{color:var(--accink);font-weight:700}
 .chip input:focus-visible+span,.chip:focus-visible span{outline:2px solid var(--acc);outline-offset:2px}
@@ -102,7 +103,7 @@ if(seen){s.remove();return}try{sessionStorage.setItem("tal_splash","1")}catch(e)
 var t0=Date.now(),done=false;function hide(){if(done)return;done=true;s.classList.add("off");setTimeout(function(){s.remove()},600)}
 function go(){setTimeout(hide,Math.max(0,1800-(Date.now()-t0)))}
 if(document.readyState==="complete")go();else window.addEventListener("load",go);setTimeout(hide,3800);s.onclick=hide})();</script>
-<div id="brand"><i></i><b>TAL</b><span>Traduction Africaine des Langues</span><small id="ver" style="margin-left:auto;color:var(--mut);font-size:.65rem">v21</small></div>
+<div id="brand"><i></i><b>TAL</b><span>Traduction Africaine des Langues</span><small id="ver" style="margin-left:auto;color:var(--mut);font-size:.65rem">v23</small></div>
 <nav role="tablist" aria-label="Rubriques">
  <button role="tab" id="tb-c" data-v="vc" aria-selected="true">🎙️ Causerie</button>
  <button role="tab" id="tb-e" data-v="ve" aria-selected="false">🌍 Équipédia</button>
@@ -127,7 +128,7 @@ if(document.readyState==="complete")go();else window.addEventListener("load",go)
 <label class="chip" title="Lire la traduction à voix haute"><input type="checkbox" id="au" checked><span>🔊<em>Voix</em></span></label>
 <label class="chip" title="Dialogue à deux : alterner la langue à chaque phrase"><input type="checkbox" id="alt"><span>👥<em>Alterner</em></span></label>
 <button class="chip" id="sb" aria-label="Traduire dans l’autre sens"><span>🔄<em>Sens inverse</em></span></button>
-<button class="chip" id="vt" aria-label="Tester la voix"><span>🔈<em>Test voix</em></span></button>
+<label class="chip" title="Corriger le français (grammaire, orthographe) quand tu as internet"><input type="checkbox" id="gr" checked><span>✍️<em>Grammaire</em></span></label>
 <button class="chip" id="hc" aria-label="Effacer l’historique"><span>🗑<em>Effacer</em></span></button>
 </div>
 </footer>
@@ -206,6 +207,8 @@ if(document.readyState==="complete")go();else window.addEventListener("load",go)
  <h2 style="margin-top:18px">QR code</h2>
  <p class="note" id="qrnote">Fais scanner ce code avec l’appareil photo d’un téléphone.</p>
  <div id="qrbox" style="max-width:260px;margin:8px auto;border-radius:12px;overflow:hidden;border:1px solid var(--line)"></div>
+ <button class="btn2" id="vt" style="margin:14px 0 0 0">🔈 Tester la voix</button>
+ <p class="note">✍️ <b>Grammaire</b> (puce du bas de Causerie) : quand tu as internet, le texte <b>français</b> traduit est envoyé au service LanguageTool pour corriger l’orthographe et la grammaire. Décoche la puce pour ne rien envoyer. Les règles de base (majuscules, ponctuation, élisions) marchent toujours, sans internet.</p>
  <button class="btn" id="shQr">⬇ Enregistrer le QR code (image)</button>
 </div></section>
 <div id="toast" role="status"></div>
@@ -344,15 +347,39 @@ function phon(s){return nk(s).split(" ").map(function(w){
   .replace(/eau|au/g,"o").replace(/ou|w/g,"u").replace(/ai|ei|ey|ay/g,"e").replace(/y/g,"i").replace(/x/g,"ks").replace(/z/g,"s").replace(/h/g,"").replace(/(.)\1+/g,"$1");
  if(w.length>=4)w=w.replace(/s$/,"");return w}).join("")}
 function kk(s,code){return isLoc(code)?phon(s):nk(s)}
-function lev1(a,b){if(a===b)return true;var la=a.length,lb=b.length;if(Math.abs(la-lb)>1)return false;var i=0;while(i<la&&i<lb&&a[i]===b[i])i++;
- if(la===lb)return a.slice(i+1)===b.slice(i+1);if(la>lb)return a.slice(i+1)===b.slice(i);return a.slice(i)===b.slice(i+1)}
-function nearKey(pairs,key){if(key.length<5)return null;var c=Object.keys(pairs).filter(function(k){return k.length>=5&&lev1(k,key)});return c.length===1?c[0]:null}
-function dictFind(txt,f,t){var k=kk(txt,f[1]),loc=isLoc(f[1]),hits=[],rk={"validé":2,"en attente":1};
- function scan(near){getDict().forEach(function(x){if(x.status==="refusé"||x.word===PLH)return;var r=rk[x.status]||0;
-  var m=function(s){var a=kk(s,f[1]);return near?(a.length>=5&&lev1(a,k)):a===k};
+
+// ---------- Règles du français (orthographe, ponctuation, majuscules) ----------
+function lcFirst(s){return String(s).replace(/^(\p{Lu})(?=\p{Ll})/u,function(m){return m.toLowerCase()})}
+var ELI={le:"l’",la:"l’",je:"j’",me:"m’",te:"t’",se:"s’",ne:"n’",de:"d’",que:"qu’",jusque:"jusqu’"};
+function fixFr(s){
+ s=String(s).replace(/\s+/g," ").trim();if(!s)return s;
+ s=s.replace(/(\p{L})'(\p{L})/gu,"$1’$2");                                   // apostrophe typographique
+ s=s.replace(/\s+([,.)])/g,"$1").replace(/\(\s+/g,"(");                      // pas d’espace avant , . )
+ s=s.replace(/([^\s?!;])\s*([?!;]+)/g,"$1 $2").replace(/(\p{L})\s*:(?=\s|$)/gu,"$1 :"); // espace avant ? ! ; :
+ s=s.replace(/([,;:!?])(?=\p{L})/gu,"$1 ").replace(/(\.)(?=\p{Lu})/gu,"$1 ");  // espace après la ponctuation
+ s=s.replace(/(^|\s)(c’est|le|la|les|un|une|de|des|du|au|aux|et|que|qui|pour|dans|sur|je|tu|il|elle|on) \2(?=\s|$|[.,;:!?])/giu,"$1$2"); // mot répété
+ s=s.replace(/(^|\s)(le|la|je|me|te|se|ne|de|que|jusque) (?=[aeiouàâäéèêëîïôöùûüœ]|h(?:omme|eure|ôtel|opital|ôpital|abitude|istoire|ier))/giu,function(m,sp,w){var r=ELI[w.toLowerCase()];return sp+(w[0]!==w[0].toLowerCase()?r.charAt(0).toUpperCase()+r.slice(1):r)});
+ s=s.replace(/(^|\s)ce (est|était|étaient|a)(?=\s|$|[.,;:!?])/giu,function(m,sp,w){return sp+"c’"+w}).replace(/(^|\s)si (ils?)(?=\s|$|[.,;:!?])/giu,function(m,sp,w){return sp+"s’"+w});
+ s=s.replace(/^(\p{Ll})/u,function(m){return m.toUpperCase()});                // majuscule en début de phrase
+ s=s.replace(/([.!?…]\s+)(\p{Ll})/gu,function(m,a,b){return a+b.toUpperCase()}); // et après . ! ? …
+ return s}
+async function ltFix(text,keep){ // correction de grammaire en ligne (LanguageTool), facultative
+ try{
+  if(typeof navigator!=="undefined"&&navigator.onLine===false)return text;if(text.length>400)return text;
+  var ctl=typeof AbortController!=="undefined"?new AbortController():null,to=ctl?setTimeout(function(){ctl.abort()},3000):0;
+  var res=await fetch("https://api.languagetool.org/v2/check",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:"language=fr&text="+encodeURIComponent(text),signal:ctl?ctl.signal:undefined});
+  clearTimeout(to);if(!res.ok)return text;
+  var j=await res.json(),okc={TYPOS:1,GRAMMAR:1,CASING:1,PUNCTUATION:1,TYPOGRAPHY:1,COMPOUNDING:1,CONFUSED_WORDS:1};
+  var ms=(j.matches||[]).filter(function(m){var c=m.rule&&m.rule.category&&m.rule.category.id;return okc[c]&&m.replacements&&m.replacements.length&&!keep[nk(text.substr(m.offset,m.length))]});
+  ms.sort(function(a,b){return b.offset-a.offset});var out=text,lim=Infinity;
+  ms.forEach(function(m){if(m.offset+m.length>lim)return;out=out.slice(0,m.offset)+m.replacements[0].value+out.slice(m.offset+m.length);lim=m.offset});
+  return out}catch(e){return text}}
+function dictFind(txt,f,t){var k=kk(txt,f[1]),hits=[],rk={"validé":2,"en attente":1};
+ function scan(){getDict().forEach(function(x){if(x.status==="refusé"||x.word===PLH)return;var r=rk[x.status]||0;
+  var m=function(s){return kk(s,f[1])===k};
   if(x.lang===f[1]&&x.target===t[1]&&m(x.word))senses(x).forEach(function(z){hits.push({text:z.d,r:r})});
   else if(x.target===f[1]&&x.lang===t[1]&&senses(x).some(function(z){return m(z.d)}))hits.push({text:x.word,r:r})})}
- scan(false);if(!hits.length&&loc)scan(true);
+ scan();
  if(!hits.length)return null;var mr=Math.max.apply(null,hits.map(function(x){return x.r})),tx=[];
  hits.forEach(function(x){if(x.r===mr&&tx.indexOf(x.text)<0)tx.push(x.text)});
  return {text:tx[0],alts:tx.slice(1),status:mr===2?"validé":"en attente"}}
@@ -377,13 +404,12 @@ function dictSub(txt,f,t){
  var pairs={},rk={"validé":2,"en attente":1},maxn=1;
  function add(s,o){var k=kk(s,f[1]);(pairs[k]=pairs[k]||[]).push(o);maxn=Math.max(maxn,nk(s).split(" ").length+(isLoc(f[1])?1:0))}
  getDict().forEach(function(x){if(x.status==="refusé"||x.word===PLH)return;var r=rk[x.status]||0;
-  if(x.lang===f[1]&&x.target===t[1])senses(x).forEach(function(z){add(x.word,{d:z.d,r:r,cues:cueList(z.cues+","+(x.cues||""))})});
+  if(x.lang===f[1]&&x.target===t[1])senses(x).forEach(function(z){add(x.word,{d:(t[1]==="fr"&&!/nom propre/i.test(x.ctx||""))?lcFirst(z.d):z.d,r:r,cues:cueList(z.cues+","+(x.cues||""))})});
   else if(x.target===f[1]&&x.lang===t[1])senses(x).forEach(function(z){add(z.d,{d:x.word,r:r,cues:[]})})});
  var tk=String(txt).trim().split(/\s+/),ctx=tk.map(function(w){return nk(w)}),out=[],hit=0,amb=[],i=0;
  tk.forEach(function(w,ix){if(ix>0&&/^\p{Lu}\p{L}+$/u.test(w))ctx.push("personne")});
  function look(i){var n,key,p,loc=isLoc(f[1]);
   for(n=Math.min(maxn,tk.length-i);n>=1;n--){key=kk(tk.slice(i,i+n).join(" "),f[1]);p=pairs[key];if(p)return {c:p,n:n}}
-  if(loc)for(n=Math.min(maxn,tk.length-i);n>=1;n--){key=kk(tk.slice(i,i+n).join(" "),f[1]);var q2=nearKey(pairs,key);if(q2)return {c:pairs[q2],n:n}}
   return null}
  while(i<tk.length){var lk=look(i),cands=lk?lk.c:null,n=lk?lk.n:0;
   if(cands){var pk=choose(cands,ctx);if(pk.amb)amb.push("« "+tk.slice(i,i+n).join(" ")+" » = "+pk.d+" (autre sens : "+pk.alts.join(", ")+")");out.push(pk.d);hit++;i+=n}else{out.push(tk[i]);i++}}
@@ -395,7 +421,8 @@ async function mt(txt,f,t){var res=await fetch("https://api.mymemory.translated.
 var PART="📖 Équipédia — traduction partielle : seuls les mots du dictionnaire sont remplacés, à vérifier";
 function pm(s){return PART+(s.amb&&s.amb.length?". Sens choisi par défaut : "+s.amb.join(" ; ")+". Ajoute un indice dans Équipédia (nourriture, personne…) pour choisir":"")}
 function stTxt(s){return s==="validé"?"validé":"en attente de validation, non vérifié"}
-async function tr(txt,f,t){
+async function tr(txt,f,t){var r=await tr0(txt,f,t);if(t[1]==="fr")r.text=fixFr(r.text);return r}
+async function tr0(txt,f,t){
  var FR=L("fr"),d=dictFind(txt,f,t);
  if(d)return {text:d.text,src:"📖 Équipédia ("+stTxt(d.status)+")"+(d.alts.length?" — autre sens possible : "+d.alts.join(", "):"")};
  if(f[1]!=="fr"&&t[1]!=="fr"){
@@ -500,7 +527,7 @@ $("hc").onclick=function(){if(!hist.length||!confirm("Effacer l’historique de 
 async function go(side,txt,el){
  var f=L(side=="a"?A:B),t=L(side=="a"?B:A);
  el.classList.remove("live");el.querySelector(".o").textContent=txt;el.querySelector(".t").textContent="…";
- try{var r;try{r=await tr(txt,f,t)}catch(e0){if(e0.message==="NOMT"){try{r=await tr(txt,t,f);r.src=(r.src?r.src+" · ":"")+"↔ Sens inversé automatiquement : "+t[2].split(" (")[0]+" → "+f[2].split(" (")[0];var sw=f;f=t;t=sw}catch(e1){throw e0}}else throw e0}var o=r.text;el.querySelector(".t").textContent=o;
+ try{var r;try{r=await tr(txt,f,t)}catch(e0){if(e0.message==="NOMT"){try{r=await tr(txt,t,f);r.src=(r.src?r.src+" · ":"")+"↔ Sens inversé automatiquement : "+t[2].split(" (")[0]+" → "+f[2].split(" (")[0];var sw=f;f=t;t=sw}catch(e1){throw e0}}else throw e0}var o=r.text;if(t[1]==="fr"&&$("gr").checked){var kp={};txt.split(/\s+/).forEach(function(w){kp[nk(w)]=1});o=fixFr(await ltFix(o,kp))}el.querySelector(".t").textContent=o;
   if(r.src){var s=document.createElement("div");s.className="src";s.textContent=r.src;el.appendChild(s)}
   var b=document.createElement("button");b.className="sp";b.textContent="🔊";b.setAttribute("aria-label","Écouter");b.onclick=function(){speak(o,t)};el.appendChild(b);
   hist.push({s:side,o:txt,t:o,src:r.src});hist=hist.slice(-60);sv(HK,hist);
@@ -604,6 +631,6 @@ $("vcSend").onclick=sendVoice;
 Array.prototype.forEach.call(document.querySelectorAll("[data-mic]"),function(b){b.onclick=function(){dictate(b,$(b.getAttribute("data-mic")))}});
 $("vcList").onclick=function(){$("dictQ").value="";$("dictF").value="🔊 avec voix";renderDict();$("dictEntries").scrollIntoView({block:"start"});if(!getDict().some(function(x){return x.hasAudio||x.audio}))toast("Aucune contribution orale pour le moment")};
 
-refreshSel();renderDict();renderLangs();status();$("vmode").checked=!!ADMIN;$("vt").onclick=function(){var n=0,lc=0;try{speechSynthesis.getVoices().forEach(function(x){if(x.lang.toLowerCase().indexOf("fr")===0){n++;if(x.localService)lc++}})}catch(e){}toast(n?"Voix françaises : "+n+" ("+lc+" hors ligne). Écoute…":"Aucune voix française trouvée : installe-la dans Réglages > Synthèse vocale");speak("Bonjour, ceci est un test de la voix.",L("fr"))};try{initShare()}catch(e){}syncNow();setInterval(syncNow,90000);window.addEventListener("online",syncNow);
+refreshSel();renderDict();renderLangs();status();$("vmode").checked=!!ADMIN;$("gr").checked=ld("lt_gr",true);$("gr").onchange=function(){sv("lt_gr",this.checked)};$("vt").onclick=function(){var n=0,lc=0;try{speechSynthesis.getVoices().forEach(function(x){if(x.lang.toLowerCase().indexOf("fr")===0){n++;if(x.localService)lc++}})}catch(e){}toast(n?"Voix françaises : "+n+" ("+lc+" hors ligne). Écoute…":"Aucune voix française trouvée : installe-la dans Réglages > Synthèse vocale");speak("Bonjour, ceci est un test de la voix.",L("fr"))};try{initShare()}catch(e){}syncNow();setInterval(syncNow,90000);window.addEventListener("online",syncNow);
 if(window.speechSynthesis)speechSynthesis.getVoices();
 </script></body></html>
