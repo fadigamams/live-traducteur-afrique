@@ -102,7 +102,7 @@ if(seen){s.remove();return}try{sessionStorage.setItem("tal_splash","1")}catch(e)
 var t0=Date.now(),done=false;function hide(){if(done)return;done=true;s.classList.add("off");setTimeout(function(){s.remove()},600)}
 function go(){setTimeout(hide,Math.max(0,1800-(Date.now()-t0)))}
 if(document.readyState==="complete")go();else window.addEventListener("load",go);setTimeout(hide,3800);s.onclick=hide})();</script>
-<div id="brand"><i></i><b>TAL</b><span>Traduction Africaine des Langues</span></div>
+<div id="brand"><i></i><b>TAL</b><span>Traduction Africaine des Langues</span><small id="ver" style="margin-left:auto;color:var(--mut);font-size:.65rem">v20</small></div>
 <nav role="tablist" aria-label="Rubriques">
  <button role="tab" id="tb-c" data-v="vc" aria-selected="true">🎙️ Causerie</button>
  <button role="tab" id="tb-e" data-v="ve" aria-selected="false">🌍 Équipédia</button>
@@ -543,10 +543,20 @@ function showAlts(box,input,res){box.innerHTML="";var seen={};seen[nz(input.valu
  if(box.children.length){var l=document.createElement("small");l.textContent="Autres écritures possibles, touche la bonne :";box.insertBefore(l,box.firstChild)}}
 function dictate(btn,input,quiet,done){var R=window.SpeechRecognition||window.webkitSpeechRecognition;
  if(!R){if(!quiet)toast("Dictée non disponible ici : ouvre l’appli dans Chrome");return null}
- var r=new R(),box=altBox(input);r.lang="fr-FR";r.interimResults=true;r.continuous=false;r.maxAlternatives=4;box.innerHTML="";if(btn)btn.classList.add("rec");
+ var r=new R(),box=altBox(input),err="";r.lang="fr-FR";r.interimResults=true;r.continuous=false;r.maxAlternatives=4;box.innerHTML="";if(btn)btn.classList.add("rec");
  r.onresult=function(e){var t="";for(var i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;input.value=t;var last=e.results[e.results.length-1];if(last.isFinal)showAlts(box,input,last)};
- r.onerror=function(e){if(e.error==="aborted")return;if(e.error==="no-speech"){toast("Je n’ai rien entendu : appuie sur 🎤 et parle plus près");return}if(quiet&&e.error!=="not-allowed")return;toast(e.error=="not-allowed"?"Micro refusé : autorise-le pour ce site":e.error=="network"?"Pas de connexion : l’écriture automatique en a besoin":"Micro : "+e.error)};
- r.onend=function(){if(btn)btn.classList.remove("rec");if(done)done(input.value.trim())};try{r.start()}catch(e){if(btn)btn.classList.remove("rec");return null}return r}
+ r.onerror=function(e){err=e.error;if(e.error==="aborted")return;if(e.error==="no-speech"){toast("Je n’ai rien entendu : appuie sur 🎤 et parle plus près");return}if(quiet&&e.error!=="not-allowed")return;toast(e.error=="not-allowed"?"Micro refusé : autorise-le pour ce site":e.error=="network"?"Pas de connexion : l’écriture automatique en a besoin":"Micro : "+e.error)};
+ r.onend=function(){if(btn)btn.classList.remove("rec");if(done)done(input.value.trim(),err)};try{r.start()}catch(e){if(btn)btn.classList.remove("rec");return null}return r}
+function vcExplain(v,err){
+ if(v)return "✔ Texte écrit. Corrige-le en le touchant, ou choisis une autre écriture proposée.";
+ var m={"not-allowed":"Micro refusé : dans Chrome, menu ⋮ → Paramètres du site → Micro → Autoriser, puis réessaie.","service-not-allowed":"Micro refusé : dans Chrome, menu ⋮ → Paramètres du site → Micro → Autoriser, puis réessaie.","audio-capture":"Le micro est occupé : ferme les autres applis qui l’utilisent, puis appuie sur 🎤 à côté du champ.","network":"Pas de connexion internet : l’écriture automatique en a besoin.","no-speech":"Je n’ai rien entendu : appuie sur 🎤 à côté du champ et parle plus près du téléphone."};
+ return m[err]||"Je n’ai rien compris"+(err?" (code : "+err+")":"")+" : appuie sur 🎤 à côté du champ et réessaie."}
+function autoWord(n){
+ vcMsg("🎙️ Répète le mot une fois, je l’écris…");
+ VC.sr=dictate($("vcWordMic"),$("vcWord"),false,function(v,err){
+  if(!v&&err==="audio-capture"&&n<2){setTimeout(function(){autoWord(n+1)},1200);return}
+  vcMsg(vcExplain(v,err))});
+ if(!VC.sr)vcMsg("L’écriture automatique n’est pas disponible sur ce téléphone : écris le mot, ou laisse un volontaire l’écrire à partir de ta voix.")}
 function sendVoice(){
  var m=$("vcMeaning").value.trim().replace(/\s+/g," "),w=$("vcWord").value.trim().replace(/\s+/g," ")||PLH;
  if(!VC.audio){toast("Enregistre d’abord ta voix avec le micro 1");return}
@@ -566,13 +576,13 @@ $("vcRec").onclick=function(){
   mr.onstop=function(){clearTimeout(VC.t);try{if(VC.sr)VC.sr.stop()}catch(e){}st.getTracks().forEach(function(t){t.stop()});b.classList.remove("rec");b.textContent="🎤 Refaire l’enregistrement";
    var blob=new Blob(ch,{type:mr.mimeType||"audio/webm"});
    if(!blob.size||blob.size>240000){toast(blob.size?"Trop long : 8 secondes maximum":"Rien enregistré, réessaie");VC.audio=null;$("vcPlay").hidden=true;return}
-   var fr=new FileReader();fr.onload=function(){VC.audio={mime:(blob.type||"audio/webm").split(";")[0],b64:String(fr.result).split(",")[1]};$("vcPlay").hidden=false;vcMsg("✔ Voix enregistrée ! Répète maintenant le mot une fois pour qu’il s’écrive…");setTimeout(function(){VC.sr=dictate($("vcWordMic"),$("vcWord"),false,function(v){vcMsg(v?"✔ Mot écrit. Corrige-le ou touche une autre écriture proposée, puis dis le sens en français.":"Je n’ai rien compris : appuie sur 🎤 à côté du mot et répète-le.")})},600)};fr.readAsDataURL(blob)};
+   var fr=new FileReader();fr.onload=function(){VC.audio={mime:(blob.type||"audio/webm").split(";")[0],b64:String(fr.result).split(",")[1]};$("vcPlay").hidden=false;vcMsg("✔ Voix enregistrée ! Répète maintenant le mot une fois pour qu’il s’écrive…");setTimeout(function(){autoWord(0)},1000)};fr.readAsDataURL(blob)};
   mr.start();b.classList.add("rec");b.textContent="⏹ Appuie pour arrêter";vcMsg("🎙️ Je t’écoute… dis le mot dans ta langue");
   VC.t=setTimeout(function(){if(mr.state==="recording")mr.stop()},8000)
  }).catch(function(){toast("Micro refusé : autorise-le pour ce site")})};
 $("vcPlay").onclick=function(){if(VC.audio)try{new Audio("data:"+VC.audio.mime+";base64,"+VC.audio.b64).play()}catch(e){}};
-$("vcMeanMic").onclick=function(){dictate(this,$("vcMeaning"))};
-$("vcWordMic").onclick=function(){dictate(this,$("vcWord"))};
+$("vcMeanMic").onclick=function(){vcMsg("🎙️ Je t’écoute… dis le sens en français");dictate(this,$("vcMeaning"),false,function(v,err){vcMsg(vcExplain(v,err))})};
+$("vcWordMic").onclick=function(){vcMsg("🎙️ Je t’écoute… dis le mot");dictate(this,$("vcWord"),false,function(v,err){vcMsg(vcExplain(v,err))})};
 $("vcLang").onchange=function(){this.setAttribute("data-v",this.value)};
 $("vcHelp").onclick=function(){speak("Étape un : appuie sur le premier micro et dis le mot dans ta langue. Étape deux : appuie sur le petit micro et dis ce que ça veut dire en français. Étape trois : coche l’accord, puis appuie sur envoyer.",L("fr"))};
 $("vcSend").onclick=sendVoice;
