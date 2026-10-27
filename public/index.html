@@ -103,7 +103,7 @@ if(seen){s.remove();return}try{sessionStorage.setItem("tal_splash","1")}catch(e)
 var t0=Date.now(),done=false;function hide(){if(done)return;done=true;s.classList.add("off");setTimeout(function(){s.remove()},600)}
 function go(){setTimeout(hide,Math.max(0,1800-(Date.now()-t0)))}
 if(document.readyState==="complete")go();else window.addEventListener("load",go);setTimeout(hide,3800);s.onclick=hide})();</script>
-<div id="brand"><i></i><b>TAL</b><span>Traduction Africaine des Langues</span><small id="ver" style="margin-left:auto;color:var(--mut);font-size:.65rem">v23</small></div>
+<div id="brand"><i></i><b>TAL</b><span>Traduction Africaine des Langues</span><small id="ver" style="margin-left:auto;color:var(--mut);font-size:.65rem">v24</small></div>
 <nav role="tablist" aria-label="Rubriques">
  <button role="tab" id="tb-c" data-v="vc" aria-selected="true">🎙️ Causerie</button>
  <button role="tab" id="tb-e" data-v="ve" aria-selected="false">🌍 Équipédia</button>
@@ -342,7 +342,7 @@ function splitSenses(m){var out=[],cur="",dp=0,s=String(m);
 function senses(x){return /[(\[]/.test(x.meaning)?splitSenses(x.meaning):[{d:x.meaning,cues:""}]}
 function isLoc(code){return L(code)[3].indexOf("s")<0}
 // Clé phonétique (orthographe à la française) : « dohi », « doï », « dohy », « dauhi » donnent la même clé
-function phon(s){return nk(s).split(" ").map(function(w){
+function phon(s){return nk(s).replace(/ɔ/g,"o").replace(/[ɛə]/g,"e").replace(/ɲ/g,"N").replace(/ŋ/g,"n").replace(/ɓ/g,"b").replace(/ɗ/g,"d").replace(/ʋ/g,"v").split(" ").map(function(w){
  w=w.replace(/dj|j/g,"J").replace(/tch|ch|sh/g,"C").replace(/ph/g,"f").replace(/gn/g,"N").replace(/qu|q|ck|k/g,"k").replace(/c(?=[eiy])/g,"s").replace(/c/g,"k")
   .replace(/eau|au/g,"o").replace(/ou|w/g,"u").replace(/ai|ei|ey|ay/g,"e").replace(/y/g,"i").replace(/x/g,"ks").replace(/z/g,"s").replace(/h/g,"").replace(/(.)\1+/g,"$1");
  if(w.length>=4)w=w.replace(/s$/,"");return w}).join("")}
@@ -421,10 +421,11 @@ async function mt(txt,f,t){var res=await fetch("https://api.mymemory.translated.
 var PART="📖 Équipédia — traduction partielle : seuls les mots du dictionnaire sont remplacés, à vérifier";
 function pm(s){return PART+(s.amb&&s.amb.length?". Sens choisi par défaut : "+s.amb.join(" ; ")+". Ajoute un indice dans Équipédia (nourriture, personne…) pour choisir":"")}
 function stTxt(s){return s==="validé"?"validé":"en attente de validation, non vérifié"}
-async function tr(txt,f,t){var r=await tr0(txt,f,t);if(t[1]==="fr")r.text=fixFr(r.text);return r}
+async function tr(txt,f,t){var r=await tr0(txt,f,t),o=r.inv?f:t;if(o[1]==="fr")r.text=fixFr(r.text);return r}
 async function tr0(txt,f,t){
  var FR=L("fr"),d=dictFind(txt,f,t);
  if(d)return {text:d.text,src:"📖 Équipédia ("+stTxt(d.status)+")"+(d.alts.length?" — autre sens possible : "+d.alts.join(", "):"")};
+ var rv=dictFind(txt,t,f);if(rv)return {text:rv.text,inv:true,src:"📖 Équipédia ("+stTxt(rv.status)+") · ↔ Sens inversé automatiquement : "+t[2].split(" (")[0]+" → "+f[2].split(" (")[0]};
  if(f[1]!=="fr"&&t[1]!=="fr"){
   var a=dictFind(txt,f,FR),mid=a?a.text:null,partial=false;
   if(!mid){var s1=dictSub(txt,f,FR);if(s1.hit){mid=s1.text;partial=true}}
@@ -527,7 +528,7 @@ $("hc").onclick=function(){if(!hist.length||!confirm("Effacer l’historique de 
 async function go(side,txt,el){
  var f=L(side=="a"?A:B),t=L(side=="a"?B:A);
  el.classList.remove("live");el.querySelector(".o").textContent=txt;el.querySelector(".t").textContent="…";
- try{var r;try{r=await tr(txt,f,t)}catch(e0){if(e0.message==="NOMT"){try{r=await tr(txt,t,f);r.src=(r.src?r.src+" · ":"")+"↔ Sens inversé automatiquement : "+t[2].split(" (")[0]+" → "+f[2].split(" (")[0];var sw=f;f=t;t=sw}catch(e1){throw e0}}else throw e0}var o=r.text;if(t[1]==="fr"&&$("gr").checked){var kp={};txt.split(/\s+/).forEach(function(w){kp[nk(w)]=1});o=fixFr(await ltFix(o,kp))}el.querySelector(".t").textContent=o;
+ try{var r;try{r=await tr(txt,f,t)}catch(e0){if(e0.message==="NOMT"){try{r=await tr(txt,t,f);r.src=(r.src?r.src+" · ":"")+"↔ Sens inversé automatiquement : "+t[2].split(" (")[0]+" → "+f[2].split(" (")[0];var sw=f;f=t;t=sw}catch(e1){throw e0}}else throw e0}if(r.inv){var sw1=f;f=t;t=sw1}var o=r.text;if(t[1]==="fr"&&$("gr").checked){var kp={};txt.split(/\s+/).forEach(function(w){kp[nk(w)]=1});o=fixFr(await ltFix(o,kp))}el.querySelector(".t").textContent=o;
   if(r.src){var s=document.createElement("div");s.className="src";s.textContent=r.src;el.appendChild(s)}
   var b=document.createElement("button");b.className="sp";b.textContent="🔊";b.setAttribute("aria-label","Écouter");b.onclick=function(){speak(o,t)};el.appendChild(b);
   hist.push({s:side,o:txt,t:o,src:r.src});hist=hist.slice(-60);sv(HK,hist);
