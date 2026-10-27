@@ -103,7 +103,7 @@ if(seen){s.remove();return}try{sessionStorage.setItem("tal_splash","1")}catch(e)
 var t0=Date.now(),done=false;function hide(){if(done)return;done=true;s.classList.add("off");setTimeout(function(){s.remove()},600)}
 function go(){setTimeout(hide,Math.max(0,1800-(Date.now()-t0)))}
 if(document.readyState==="complete")go();else window.addEventListener("load",go);setTimeout(hide,3800);s.onclick=hide})();</script>
-<div id="brand"><i></i><b>TAL</b><span>Traduction Africaine des Langues</span><small id="ver" style="margin-left:auto;color:var(--mut);font-size:.65rem">v24</small></div>
+<div id="brand"><i></i><b>TAL</b><span>Traduction Africaine des Langues</span><small id="ver" style="margin-left:auto;color:var(--mut);font-size:.65rem">v25</small></div>
 <nav role="tablist" aria-label="Rubriques">
  <button role="tab" id="tb-c" data-v="vc" aria-selected="true">🎙️ Causerie</button>
  <button role="tab" id="tb-e" data-v="ve" aria-selected="false">🌍 Équipédia</button>
@@ -374,6 +374,11 @@ async function ltFix(text,keep){ // correction de grammaire en ligne (LanguageTo
   ms.sort(function(a,b){return b.offset-a.offset});var out=text,lim=Infinity;
   ms.forEach(function(m){if(m.offset+m.length>lim)return;out=out.slice(0,m.offset)+m.replacements[0].value+out.slice(m.offset+m.length);lim=m.offset});
   return out}catch(e){return text}}
+function detectLang(txt,f){ // le mot appartient-il à une autre langue du dictionnaire ?
+ var best=null,rk={"validé":2,"en attente":1};
+ getDict().forEach(function(x){if(x.status==="refusé"||x.word===PLH||x.lang===f[1]||!isLoc(x.lang))return;
+  if(kk(x.word,x.lang)===kk(txt,x.lang)){var r=rk[x.status]||0;if(!best||r>best.r)best={x:x,r:r}}});
+ return best&&best.x}
 function dictFind(txt,f,t){var k=kk(txt,f[1]),hits=[],rk={"validé":2,"en attente":1};
  function scan(){getDict().forEach(function(x){if(x.status==="refusé"||x.word===PLH)return;var r=rk[x.status]||0;
   var m=function(s){return kk(s,f[1])===k};
@@ -422,10 +427,17 @@ var PART="📖 Équipédia — traduction partielle : seuls les mots du dictionn
 function pm(s){return PART+(s.amb&&s.amb.length?". Sens choisi par défaut : "+s.amb.join(" ; ")+". Ajoute un indice dans Équipédia (nourriture, personne…) pour choisir":"")}
 function stTxt(s){return s==="validé"?"validé":"en attente de validation, non vérifié"}
 async function tr(txt,f,t){var r=await tr0(txt,f,t),o=r.inv?f:t;if(o[1]==="fr")r.text=fixFr(r.text);return r}
-async function tr0(txt,f,t){
+async function tr0(txt,f,t,dp){
  var FR=L("fr"),d=dictFind(txt,f,t);
  if(d)return {text:d.text,src:"📖 Équipédia ("+stTxt(d.status)+")"+(d.alts.length?" — autre sens possible : "+d.alts.join(", "):"")};
  var rv=dictFind(txt,t,f);if(rv)return {text:rv.text,inv:true,src:"📖 Équipédia ("+stTxt(rv.status)+") · ↔ Sens inversé automatiquement : "+t[2].split(" (")[0]+" → "+f[2].split(" (")[0]};
+
+ if(isLoc(f[1])&&!dp){var dx=detectLang(txt,f);
+  if(dx){var sn=senses(dx),from=L(dx.target),lab=L(dx.lang)[2].split(" (")[0],m0=sn[0].d,tag="🔎 Mot reconnu en "+lab;
+   if(dx.lang===t[1])return {text:dx.word,src:tag+" : c’est déjà la langue choisie. Sens en "+from[2].split(" (")[0]+" : « "+m0+" »"};
+   if(from[1]===t[1])return {text:m0,src:"📖 Équipédia ("+stTxt(dx.status)+") · "+tag};
+   try{var rr=await tr0(m0,from,t,1);rr.src=(rr.src?rr.src+" · ":"")+tag;return rr}
+   catch(e2){return {text:m0,src:tag+" : sens en "+from[2].split(" (")[0]+" (pas encore de traduction vers "+t[2].split(" (")[0]+")"}}}}
  if(f[1]!=="fr"&&t[1]!=="fr"){
   var a=dictFind(txt,f,FR),mid=a?a.text:null,partial=false;
   if(!mid){var s1=dictSub(txt,f,FR);if(s1.hit){mid=s1.text;partial=true}}
