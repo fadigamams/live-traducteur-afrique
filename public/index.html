@@ -103,7 +103,7 @@ if(seen){s.remove();return}try{sessionStorage.setItem("tal_splash","1")}catch(e)
 var t0=Date.now(),done=false;function hide(){if(done)return;done=true;s.classList.add("off");setTimeout(function(){s.remove()},600)}
 function go(){setTimeout(hide,Math.max(0,1800-(Date.now()-t0)))}
 if(document.readyState==="complete")go();else window.addEventListener("load",go);setTimeout(hide,3800);s.onclick=hide})();</script>
-<div id="brand"><i></i><b>TAL</b><span>Traduction Africaine des Langues</span><small id="ver" style="margin-left:auto;color:var(--mut);font-size:.65rem">v25</small></div>
+<div id="brand"><i></i><b>TAL</b><span>Traduction Africaine des Langues</span><small id="ver" style="margin-left:auto;color:var(--mut);font-size:.65rem">v26</small></div>
 <nav role="tablist" aria-label="Rubriques">
  <button role="tab" id="tb-c" data-v="vc" aria-selected="true">🎙️ Causerie</button>
  <button role="tab" id="tb-e" data-v="ve" aria-selected="false">🌍 Équipédia</button>
@@ -379,6 +379,47 @@ function detectLang(txt,f){ // le mot appartient-il à une autre langue du dicti
  getDict().forEach(function(x){if(x.status==="refusé"||x.word===PLH||x.lang===f[1]||!isLoc(x.lang))return;
   if(kk(x.word,x.lang)===kk(txt,x.lang)){var r=rk[x.status]||0;if(!best||r>best.r)best={x:x,r:r}}});
  return best&&best.x}
+// ---------- Conjugaison française des verbes venus du dictionnaire ----------
+var IRR={"être":["suis","es","est","sommes","êtes","sont"],"avoir":["ai","as","a","avons","avez","ont"],"aller":["vais","vas","va","allons","allez","vont"],"faire":["fais","fais","fait","faisons","faites","font"],"prendre":["prends","prends","prend","prenons","prenez","prennent"],"comprendre":["comprends","comprends","comprend","comprenons","comprenez","comprennent"],"apprendre":["apprends","apprends","apprend","apprenons","apprenez","apprennent"],"venir":["viens","viens","vient","venons","venez","viennent"],"tenir":["tiens","tiens","tient","tenons","tenez","tiennent"],"vouloir":["veux","veux","veut","voulons","voulez","veulent"],"pouvoir":["peux","peux","peut","pouvons","pouvez","peuvent"],"devoir":["dois","dois","doit","devons","devez","doivent"],"dire":["dis","dis","dit","disons","dites","disent"],"voir":["vois","vois","voit","voyons","voyez","voient"],"savoir":["sais","sais","sait","savons","savez","savent"],"partir":["pars","pars","part","partons","partez","partent"],"sortir":["sors","sors","sort","sortons","sortez","sortent"],"dormir":["dors","dors","dort","dormons","dormez","dorment"],"mettre":["mets","mets","met","mettons","mettez","mettent"],"boire":["bois","bois","boit","buvons","buvez","boivent"],"lire":["lis","lis","lit","lisons","lisez","lisent"],"écrire":["écris","écris","écrit","écrivons","écrivez","écrivent"],"courir":["cours","cours","court","courons","courez","courent"],"ouvrir":["ouvre","ouvres","ouvre","ouvrons","ouvrez","ouvrent"],"offrir":["offre","offres","offre","offrons","offrez","offrent"],"croire":["crois","crois","croit","croyons","croyez","croient"],"vivre":["vis","vis","vit","vivons","vivez","vivent"],"suivre":["suis","suis","suit","suivons","suivez","suivent"],"connaître":["connais","connais","connaît","connaissons","connaissez","connaissent"],"servir":["sers","sers","sert","servons","servez","servent"],"sentir":["sens","sens","sent","sentons","sentez","sentent"],"mourir":["meurs","meurs","meurt","mourons","mourez","meurent"]};
+var REGRE={attendre:1,entendre:1,vendre:1,perdre:1,"répondre":1,descendre:1,rendre:1,"défendre":1,"étendre":1,fondre:1,mordre:1,tordre:1,pondre:1,tendre:1,confondre:1,suspendre:1};
+var G2={finir:1,choisir:1,"réussir":1,grandir:1,agir:1,punir:1,remplir:1,"réfléchir":1,"obéir":1,grossir:1,maigrir:1,rougir:1,nourrir:1,"bâtir":1,"guérir":1,applaudir:1,"démolir":1,"établir":1,ralentir:1,saisir:1,unir:1,avertir:1,"réunir":1,"définir":1};
+var PPI={prendre:"pris",comprendre:"compris",apprendre:"appris",faire:"fait",voir:"vu",dire:"dit",savoir:"su",pouvoir:"pu",vouloir:"voulu",devoir:"dû",mettre:"mis",boire:"bu",lire:"lu","écrire":"écrit",courir:"couru",ouvrir:"ouvert",offrir:"offert","connaître":"connu",croire:"cru","être":"été",avoir:"eu",venir:"venu",tenir:"tenu",mourir:"mort",vivre:"vécu",suivre:"suivi",aller:"allé"};
+var NOVERB={mer:1,hiver:1,fer:1,cher:1,ver:1,hier:1,super:1,danger:1,"étranger":1,boulanger:1,berger:1,panier:1,cahier:1,"dîner":1,"déjeuner":1,"métier":1,quartier:1,sentier:1,papier:1,pompier:1,fermier:1,cuisinier:1,"escalier":1,"plancher":1,"clocher":1,"rocher":1,"boucher":1,"pêcher":1,"sucrier":1};
+var KEEP={va:1,vas:1,vais:1,vont:1,allons:1,allez:1,veux:1,veut:1,voulons:1,voulez:1,veulent:1,peux:1,peut:1,pouvons:1,pouvez:1,peuvent:1,dois:1,doit:1,devons:1,devez:1,doivent:1,faut:1,sais:1,sait:1,savons:1,savez:1,savent:1,pour:1,de:1,d:1,"à":1,sans:1,avant:1,afin:1,pas:1,aime:1,aimes:1,aiment:1,"préfère":1,"déteste":1,viens:1,vient:1,venez:1};
+var AUXA={ai:1,as:1,a:1,avons:1,avez:1,ont:1,jai:1};
+var CLIT={ne:1,n:1,y:1,en:1,le:1,la:1,les:1,l:1,me:1,m:1,te:1,t:1,se:1,s:1,lui:1,leur:1};
+var PRON={je:0,j:0,tu:1,il:2,elle:2,on:2,nous:3,vous:4,ils:5,elles:5};
+var DETS={le:1,la:1,l:1,un:1,une:1,mon:1,ma:1,ton:1,ta:1,son:1,sa:1,ce:1,cette:1,notre:1,votre:1},DETP={les:1,des:1,mes:1,tes:1,ses:1,ces:1,nos:1,vos:1,leurs:1};
+function tkn(w){return String(w).toLowerCase().replace(/[’'.,!?;:()«»]/g,"")}
+function wordsOf(s){return String(s).trim().split(/\s+/)}
+function isInf(d){var w=wordsOf(d)[0].toLowerCase();if(IRR[w]||REGRE[w]||G2[w]||PPI[w])return true;return /^[a-zàâäçéèêëîïôöùûüÿœ]{2,}er$/.test(w)&&w.length>=5&&!NOVERB[w]}
+function conjPresent(inf,p){
+ if(IRR[inf])return IRR[inf][p];
+ var m,st;
+ if((m=inf.match(/^(.+)er$/))){st=m[1];
+  if(p===3){if(/g$/.test(st))return st+"eons";if(/c$/.test(st))return st.slice(0,-1)+"çons"}
+  var E=["e","es","e","ons","ez","ent"];
+  if(p!==3&&p!==4){
+   if(/(appel|jet|épel|rappel|renouvel|feuillet)$/.test(st))st=st+st.slice(-1);
+   else if(/[eé][^aeiouyéèêàâîïôûùëüöä]$/.test(st))st=st.replace(/[eé]([^aeiouyéèêàâîïôûùëüöä])$/,"è$1");
+   else if(/(oy|uy)$/.test(st)||/ay$/.test(st))st=st.slice(0,-1)+"i"}
+  return st+E[p]}
+ if(G2[inf]){st=inf.slice(0,-2);return st+["is","is","it","issons","issez","issent"][p]}
+ if(REGRE[inf]){st=inf.slice(0,-2);return st+["s","s","","ons","ez","ent"][p]}
+ return null}
+function pastPart(inf){if(PPI[inf])return PPI[inf];if(/er$/.test(inf))return inf.slice(0,-2)+"é";if(G2[inf]||/ir$/.test(inf))return inf.slice(0,-1);if(REGRE[inf])return inf.slice(0,-2)+"u";return null}
+function conjFix(out,ix){
+ var ws=wordsOf(out[ix]),inf=ws[0].toLowerCase(),j=ix-1,prev=null,raw="",pj=-1;
+ while(j>=0){var pw=wordsOf(out[j]),w=tkn(pw[pw.length-1]);if(w===""||CLIT[w]){j--;continue}prev=w;raw=pw[pw.length-1];pj=j;break}
+ if(prev===null||KEEP[prev]&&!(prev==="a"))return out[ix];
+ function done(f){if(!f)return out[ix];ws[0]=f;return ws.join(" ")}
+ if(AUXA[prev])return done(pastPart(inf));
+ if(PRON.hasOwnProperty(prev))return done(conjPresent(inf,PRON[prev]));
+ if(/^\p{Lu}/u.test(raw.replace(/[’'.,]/g,"")))return done(conjPresent(inf,2));       // « Francky mange »
+ if(pj>0){var pp0=wordsOf(out[pj-1]),dt=tkn(pp0[pp0.length-1]);                           // « le garçon mange », « les enfants mangent »
+  if(DETS[dt])return done(conjPresent(inf,2));if(DETP[dt])return done(conjPresent(inf,5))}
+ return out[ix]}
+
 function dictFind(txt,f,t){var k=kk(txt,f[1]),hits=[],rk={"validé":2,"en attente":1};
  function scan(){getDict().forEach(function(x){if(x.status==="refusé"||x.word===PLH)return;var r=rk[x.status]||0;
   var m=function(s){return kk(s,f[1])===k};
@@ -397,12 +438,13 @@ function dictHints(txt,f,t){var P=pad(txt),out=[];
 var FOOD="riz,attieke,placali,foutou,sauce,pain,viande,poisson,poulet,igname,banane,aloco,garba,kedjenou,soupe,mais,haricot,pate,pates,fruit,mangue,orange,manioc,nourriture,repas,gateau,bonbon,pizza,spaghetti,oeuf,oeufs,legume,legumes,tomate,oignon,arachide,sucre".split(","),
  PERS="lui,elle,quelquun,gars,homme,femme,enfant,frere,ami,mec,voleur,gamin,eleve,fille,garcon,patron,monsieur,madame,personne".split(",");
 function cueList(c){var o=[];String(c||"").split(/[,;]/).forEach(function(w){var k=nk(w);if(!k)return;o.push(k);if(k==="nourriture")o=o.concat(FOOD);if(k==="personne")o=o.concat(PERS)});return o}
-function choose(c,ctx){
+var PERSSET={};PERS.forEach(function(w){PERSSET[w]=1});
+function choose(c,ctx,pos){
  var u=[];c.forEach(function(x){if(!u.some(function(y){return nk(y.d)===nk(x.d)}))u.push(x)});
  u.sort(function(a,b){return b.r-a.r});
  if(u.length===1)return {d:u[0].d};
  var best=null,tie=false,bs=0;
- u.forEach(function(x){var s=0;x.cues.forEach(function(q){if(ctx.indexOf(q)>=0)s++});if(s>bs){bs=s;best=x;tie=false}else if(s===bs&&s>0)tie=true});
+ u.forEach(function(x){var s=0;x.cues.forEach(function(q){if(PERSSET[q]?ctx.lastIndexOf(q)>pos:ctx.indexOf(q)>=0)s++});if(s>bs){bs=s;best=x;tie=false}else if(s===bs&&s>0)tie=true});
  if(best&&!tie)return {d:best.d};
  return {d:u[0].d,amb:1,alts:u.slice(1).map(function(x){return x.d})}}
 function dictSub(txt,f,t){
@@ -411,13 +453,14 @@ function dictSub(txt,f,t){
  getDict().forEach(function(x){if(x.status==="refusé"||x.word===PLH)return;var r=rk[x.status]||0;
   if(x.lang===f[1]&&x.target===t[1])senses(x).forEach(function(z){add(x.word,{d:(t[1]==="fr"&&!/nom propre/i.test(x.ctx||""))?lcFirst(z.d):z.d,r:r,cues:cueList(z.cues+","+(x.cues||""))})});
   else if(x.target===f[1]&&x.lang===t[1])senses(x).forEach(function(z){add(z.d,{d:x.word,r:r,cues:[]})})});
- var tk=String(txt).trim().split(/\s+/),ctx=tk.map(function(w){return nk(w)}),out=[],hit=0,amb=[],i=0;
- tk.forEach(function(w,ix){if(ix>0&&/^\p{Lu}\p{L}+$/u.test(w))ctx.push("personne")});
+ var tk=String(txt).trim().split(/\s+/),ctx=tk.map(function(w){return nk(w)}),out=[],marks=[],hit=0,amb=[],i=0;
+ tk.forEach(function(w,ix){if(ix>0&&/^\p{Lu}\p{L}+$/u.test(w))ctx[ix]="personne"});
  function look(i){var n,key,p,loc=isLoc(f[1]);
   for(n=Math.min(maxn,tk.length-i);n>=1;n--){key=kk(tk.slice(i,i+n).join(" "),f[1]);p=pairs[key];if(p)return {c:p,n:n}}
   return null}
  while(i<tk.length){var lk=look(i),cands=lk?lk.c:null,n=lk?lk.n:0;
-  if(cands){var pk=choose(cands,ctx);if(pk.amb)amb.push("« "+tk.slice(i,i+n).join(" ")+" » = "+pk.d+" (autre sens : "+pk.alts.join(", ")+")");out.push(pk.d);hit++;i+=n}else{out.push(tk[i]);i++}}
+  if(cands){var pk=choose(cands,ctx,i+n-1);if(pk.amb)amb.push("« "+tk.slice(i,i+n).join(" ")+" » = "+pk.d+" (autre sens : "+pk.alts.join(", ")+")");out.push(pk.d);if(t[1]==="fr"&&isInf(pk.d))marks.push(out.length-1);hit++;i+=n}else{out.push(tk[i]);i++}}
+ marks.forEach(function(ix){out[ix]=conjFix(out,ix)});
  var res=[];out.forEach(function(w){if(!res.length||nk(res[res.length-1])!==nk(w))res.push(w)});
  return {text:res.join(" "),hit:hit,amb:amb}}
 async function mt(txt,f,t){var res=await fetch("https://api.mymemory.translated.net/get?q="+encodeURIComponent(txt)+"&langpair="+f[1]+"|"+t[1]),j=await res.json();
@@ -593,8 +636,11 @@ var PLH="(à transcrire)",VC={rec:null,audio:null,t:0};
 function playEntry(x){var src=x.audio?"data:"+x.audio.mime+";base64,"+x.audio.b64:"/api/entries/"+x.id+"/audio";try{new Audio(src).play().catch(function(){toast("Lecture impossible")})}catch(e){toast("Lecture impossible")}}
 function vcMsg(t){$("vcMsg").textContent=t}
 function altBox(input){var row=input.closest(".row")||input,b=row.nextElementSibling;if(!b||!b.classList.contains("alts")){b=document.createElement("div");b.className="alts full";row.parentNode.insertBefore(b,row.nextSibling)}return b}
+function gbKp(t){var a=[],g=t.replace(/(^|\s)g(?=[aeiouɔɛ])/gi,function(m,s){return s+"gb"}),k=t.replace(/(^|\s)k(?=[aeiouɔɛ])/gi,function(m,s){return s+"kp"});if(g!==t)a.push(g);if(k!==t)a.push(k);return a}
 function showAlts(box,input,res){box.innerHTML="";var seen={};seen[nz(input.value)]=1;
- for(var i=0;i<res.length&&i<4;i++){var t=res[i].transcript.trim();if(!t||seen[nz(t)])continue;seen[nz(t)]=1;(function(t){var b=document.createElement("button");b.type="button";b.className="btn2";b.textContent=t;b.onclick=function(){input.value=t;box.innerHTML=""};box.appendChild(b)})(t)}
+ var cand=[];for(var q=0;q<res.length&&q<4;q++)cand.push(res[q].transcript.trim());
+ if(input.id==="vcWord"||input.id==="dictWord")cand.slice().forEach(function(c){gbKp(c).forEach(function(v){cand.push(v)})});
+ for(var i=0;i<cand.length&&i<9;i++){var t=cand[i];if(!t||seen[nz(t)])continue;seen[nz(t)]=1;(function(t){var b=document.createElement("button");b.type="button";b.className="btn2";b.textContent=t;b.onclick=function(){input.value=t;box.innerHTML=""};box.appendChild(b)})(t)}
  if(box.children.length){var l=document.createElement("small");l.textContent="Autres écritures possibles, touche la bonne :";box.insertBefore(l,box.firstChild)}}
 function dictate(btn,input,quiet,done){var R=window.SpeechRecognition||window.webkitSpeechRecognition;
  if(!R){if(!quiet)toast("Dictée non disponible ici : ouvre l’appli dans Chrome");return null}
