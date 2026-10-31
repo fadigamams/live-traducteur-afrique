@@ -103,7 +103,7 @@ if(seen){s.remove();return}try{sessionStorage.setItem("tal_splash","1")}catch(e)
 var t0=Date.now(),done=false;function hide(){if(done)return;done=true;s.classList.add("off");setTimeout(function(){s.remove()},600)}
 function go(){setTimeout(hide,Math.max(0,1800-(Date.now()-t0)))}
 if(document.readyState==="complete")go();else window.addEventListener("load",go);setTimeout(hide,3800);s.onclick=hide})();</script>
-<div id="brand"><i></i><b>TAL</b><span>Traduction Africaine des Langues</span><small id="ver" style="margin-left:auto;color:var(--mut);font-size:.65rem">v27</small></div>
+<div id="brand"><i></i><b>TAL</b><span>Traduction Africaine des Langues</span><small id="ver" style="margin-left:auto;color:var(--mut);font-size:.65rem">v28</small></div>
 <nav role="tablist" aria-label="Rubriques">
  <button role="tab" id="tb-c" data-v="vc" aria-selected="true">🎙️ Causerie</button>
  <button role="tab" id="tb-e" data-v="ve" aria-selected="false">🌍 Équipédia</button>
@@ -590,16 +590,34 @@ async function go(side,txt,el){
   if($("au").checked){if(cont)vs("🔊 Lecture de la traduction…");speak(o,t,resume)}else resume();el.scrollIntoView({block:"end"})}
  catch(e){el.querySelector(".t").textContent=e.message==="NOMT"?(e.hints&&e.hints.length?"ℹ Phrase non traduite en entier. Mots connus dans Équipédia : "+e.hints.join(" ; ")+". Ajoute la phrase complète dans Équipédia pour la traduire.":"ℹ Pas de traduction automatique pour "+f[2]+" ⇄ "+t[2]+" : seul le dictionnaire Équipédia est utilisé. Ajoute ce mot dans Équipédia."):"⚠ Traduction impossible (réseau ?). Les mots d’Équipédia restent disponibles hors ligne.";resume()}}
 var SR=window.SpeechRecognition||window.webkitSpeechRecognition,cur=null;
-function sttOk(l){if(!SR){toast("Micro non disponible ici. Ouvre dans Chrome ou écris le texte.");return false}if(!can(l,"s")){toast("La reconnaissance vocale de "+l[2]+" n’est pas prise en charge : écris le texte.");return false}return true}
+var FRBASED={nouchi:1};function hasStt(l){return can(l,"s")||!!FRBASED[l[1]]}function srLang(l){return FRBASED[l[1]]?"fr-FR":l[0]}
+function lev1(a,b){if(a===b)return true;var la=a.length,lb=b.length;if(Math.abs(la-lb)>1)return false;
+ if(la===lb){var d=0;for(var i=0;i<la;i++)if(a[i]!==b[i])d++;return d===1}   // une lettre mal entendue
+ var s=la<lb?a:b,g=la<lb?b:a;return g.indexOf(s)===0}                          // une lettre en trop à la fin ; jamais au milieu (« gbakra » ≠ « gbaka »)
+// remplace chaque mot entendu par le mot de la langue (Équipédia) qui sonne pareil
+function snap(text,l){
+ var words=getDict().filter(function(x){return x.lang===l[1]&&x.status!=="refusé"&&x.word!==PLH}).map(function(x){return {w:x.word,k:phon(x.word),n:nk(x.word).split(" ").length}});
+ if(!words.length)return {text:text,changed:false};
+ var tk=text.trim().split(/\s+/),out=[],i=0,ch=false,maxn=Math.min(3,Math.max.apply(null,words.map(function(o){return o.n})));
+ while(i<tk.length){var hit=null,n;
+  for(n=Math.min(maxn,tk.length-i);n>=1;n--){var key=phon(tk.slice(i,i+n).join(" "));
+   hit=words.filter(function(o){return o.k===key})[0]||null;
+   if(!hit&&key.length>=4){var c=words.filter(function(o){return o.k.length>=4&&Math.max(o.k.length,key.length)>=5&&lev1(o.k,key)});if(c.length===1)hit=c[0]}
+   if(hit){out.push(hit.w);if(nk(hit.w)!==nk(tk.slice(i,i+n).join(" ")))ch=true;i+=n;break}}
+  if(!hit){out.push(tk[i]);i++}}
+ return {text:out.join(" "),changed:ch}}
+function goHeard(side,txt,el,l){var sn=FRBASED[l[1]]?snap(txt,l):{text:txt,changed:false},p=go(side,sn.text,el);
+ if(sn.changed)p.then(function(){var n=document.createElement("div");n.className="src";n.textContent="🗣️ Entendu : « "+txt+" »";el.appendChild(n)});return p}
+function sttOk(l){if(!SR){toast("Micro non disponible ici. Ouvre dans Chrome ou écris le texte.");return false}if(!hasStt(l)){toast("La reconnaissance vocale de "+l[2]+" n’est pas prise en charge : écris le texte.");return false}return true}
 function listen(side){var l=L(side=="a"?A:B);
- if(cur){cur.stop();return}if(!can(l,"s")){listenLocal(side);return}if(!sttOk(l))return;if(cont)cstop();
+ if(cur){cur.stop();return}if(!hasStt(l)){listenLocal(side);return}if(!sttOk(l))return;if(cont)cstop();
  if(window.speechSynthesis)speechSynthesis.cancel();
  var btn=$(side=="a"?"ma":"mb"),r=new SR(),el=bubble(side),txt="";
  el.classList.add("live");el.querySelector(".o").textContent="Je t’écoute…";
- r.lang=l[0];r.interimResults=true;r.continuous=false;cur=r;btn.classList.add("rec");
+ r.lang=srLang(l);r.interimResults=true;r.continuous=false;cur=r;btn.classList.add("rec");
  r.onresult=function(e){txt="";for(var i=0;i<e.results.length;i++)txt+=e.results[i][0].transcript;el.querySelector(".o").textContent=txt};
  r.onerror=function(e){toast(e.error=="not-allowed"||e.error=="service-not-allowed"?"Micro refusé : autorise-le pour ce site":e.error=="network"?"Pas de connexion : la reconnaissance vocale en a besoin":"Erreur micro : "+e.error)};
- r.onend=function(){cur=null;btn.classList.remove("rec");txt=txt.trim();if(txt)go(side,txt,el);else el.remove()};
+ r.onend=function(){cur=null;btn.classList.remove("rec");txt=txt.trim();if(txt)goHeard(side,txt,el,l);else el.remove()};
  try{r.start()}catch(e){cur=null;btn.classList.remove("rec");el.remove()}}
 var cont=false,dir="a",crec=null,cel=null,holding=false,lt=0,busyL=false;
 function cl(){return L(dir=="a"?A:B)}function ct(){return L(dir=="a"?B:A)}
@@ -607,13 +625,13 @@ function banner(){$("cb").textContent="🎧 "+cl()[2]+" → "+ct()[2]}
 function vs(t){$("vstat").textContent=t}
 function resume(){if(cont&&holding){holding=false;vs("🎙️ Je t’écoute… parle en "+cl()[2].split(" (")[0]);run()}}
 function cstop(){cont=false;holding=false;$("mc").classList.remove("rec");$("cbar").hidden=true;vs("Appuie sur 🎙️ pour parler : traduction en direct");try{if(crec)crec.stop()}catch(e){}if(cel){cel.remove();cel=null}}
-function cstart(){if(!can(cl(),"s")){listenLocal(dir);return}if(!sttOk(cl()))return;if(cur)cur.stop();cont=true;holding=false;dir="a";$("mc").classList.add("rec");$("cbar").hidden=false;banner();vs("🎙️ Je t’écoute… parle en "+cl()[2].split(" (")[0]);run()}
+function cstart(){if(!hasStt(cl())){listenLocal(dir);return}if(!sttOk(cl()))return;if(cur)cur.stop();cont=true;holding=false;dir="a";$("mc").classList.add("rec");$("cbar").hidden=false;banner();vs("🎙️ Je t’écoute… parle en "+cl()[2].split(" (")[0]);run()}
 function livetr(txt){var n=Date.now();if(busyL||n-lt<1200||txt.length<4)return;lt=n;busyL=true;var el=cel;tr(txt,cl(),ct()).then(function(o){if(el&&cont&&el.classList.contains("live"))el.querySelector(".t").textContent=o.text}).catch(function(){}).then(function(){busyL=false})}
-function commit(side,text){holding=true;vs("🌐 Traduction…");var el=cel||bubble(side);cel=null;if($("alt").checked&&can(L(dir=="a"?B:A),"s")){dir=dir=="a"?"b":"a";banner()}go(side,text,el)}
+function commit(side,text){holding=true;vs("🌐 Traduction…");var el=cel||bubble(side);cel=null;if($("alt").checked&&hasStt(L(dir=="a"?B:A))){dir=dir=="a"?"b":"a";banner()}goHeard(side,text,el,L(side=="a"?A:B))}
 function run(){
  if(!cont||holding)return;
  if(!sttOk(cl())){cstop();return}
- var side=dir,r=new SR();r.lang=cl()[0];r.continuous=false;r.interimResults=true;crec=r;var lastIt="";
+ var side=dir,r=new SR();r.lang=srLang(cl());r.continuous=false;r.interimResults=true;crec=r;var lastIt="";
  if(!cel){cel=bubble(side);cel.classList.add("live")}else cel.className="m live "+side;
  cel.querySelector(".o").textContent="Je t’écoute…";cel.querySelector(".t").textContent="";
  r.onresult=function(e){var fin="",it="";
@@ -742,8 +760,10 @@ function recordWord(){return new Promise(function(res,rej){
   mr.ondataavailable=function(e){if(e.data&&e.data.size)ch.push(e.data)};
   mr.onstop=function(){st.getTracks().forEach(function(t){t.stop()});new Blob(ch,{type:mr.mimeType||"audio/webm"}).arrayBuffer().then(res,rej)};
   mr.start();REC={stop:stop}}).catch(rej)})}
-function wordChoice(side,el,list){var box=document.createElement("div");box.className="alts";
+function addNew(l){document.getElementById("tb-e").click();$("dictLang").value=l[1];$("dictLang").setAttribute("data-v",l[1]);$("vcLang").value=l[1];$("vcLang").setAttribute("data-v",l[1]);toast("Ajoute ton mot avec « Contribuer avec ma voix »");$("vcard").scrollIntoView({block:"start"})}
+function wordChoice(side,el,list,l){var box=document.createElement("div");box.className="alts";
  list.forEach(function(o){var b=document.createElement("button");b.type="button";b.className="btn2";b.textContent=o.x.word+" — "+senses(o.x)[0].d;b.onclick=function(){box.remove();go(side,o.x.word,el)};box.appendChild(b)});
+ var nw=document.createElement("button");nw.type="button";nw.className="btn2";nw.textContent="➕ Aucun de ces mots : l’ajouter";nw.onclick=function(){addNew(l)};box.appendChild(nw);
  el.appendChild(box)}
 async function listenLocal(side){
  var l=L(side=="a"?A:B),btn=$(side=="a"?"ma":"mb"),nm=l[2].split(" (")[0];
@@ -758,12 +778,13 @@ async function listenLocal(side){
  if(!q){vs("Je n’ai rien entendu : réessaie plus près du micro.");toast("Je n’ai rien entendu");return}
  var rk=await rankVoice(q,refs);
  if(!rk.length){vs("Je n’ai pas pu lire les voix enregistrées (internet ?).");return}
- var el=bubble(side);el.querySelector(".o").textContent="🎙️ Mot dit en "+nm+" (reconnaissance approximative)";el.querySelector(".t").textContent="Tu as dit :";
- vs("Choisis le bon mot, ou réessaie.");
- if(rk.length>1&&rk[0].d<0.8*rk[1].d){await go(side,rk[0].x.word,el);
+ var el=bubble(side);el.querySelector(".o").textContent="🎙️ Mot dit en "+nm+" (reconnaissance approximative)";var ds=rk.map(function(o){return o.d}).sort(function(a,b){return a-b}),med=ds[Math.floor(ds.length/2)],sure=rk.length>1&&rk[0].d<0.8*rk[1].d&&rk[0].d<0.75*med;
+ el.querySelector(".t").textContent=sure?"Tu as dit :":"Je ne suis pas sûr. Mots les plus proches :";
+ vs(sure?"Voilà ce que j’ai compris.":"Je ne suis pas sûr : choisis le bon mot, ou ajoute-le.");
+ if(sure){await go(side,rk[0].x.word,el);
   var alt=document.createElement("div");alt.className="alts";var sm=document.createElement("small");sm.textContent="Pas ça ? Autres mots proches :";alt.appendChild(sm);
   rk.slice(1,3).forEach(function(o){var b=document.createElement("button");b.type="button";b.className="btn2";b.textContent=o.x.word;b.onclick=function(){go(side,o.x.word,bubble(side))};alt.appendChild(b)});el.appendChild(alt)}
- else wordChoice(side,el,rk.slice(0,3))}
+ else wordChoice(side,el,rk.slice(0,3),l)}
 
 refreshSel();renderDict();renderLangs();status();$("vmode").checked=!!ADMIN;$("gr").checked=ld("lt_gr",true);$("gr").onchange=function(){sv("lt_gr",this.checked)};$("vt").onclick=function(){var n=0,lc=0;try{speechSynthesis.getVoices().forEach(function(x){if(x.lang.toLowerCase().indexOf("fr")===0){n++;if(x.localService)lc++}})}catch(e){}toast(n?"Voix françaises : "+n+" ("+lc+" hors ligne). Écoute…":"Aucune voix française trouvée : installe-la dans Réglages > Synthèse vocale");speak("Bonjour, ceci est un test de la voix.",L("fr"))};try{initShare()}catch(e){}syncNow();setInterval(syncNow,90000);window.addEventListener("online",syncNow);
 if(window.speechSynthesis)speechSynthesis.getVoices();
