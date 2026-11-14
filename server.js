@@ -1,20 +1,32 @@
-const express = require("express"), { Pool } = require("pg"), path = require("path"), crypto = require("crypto");
-const app = express(); app.set("trust proxy", 1);
+const express = require("express"), { Pool } = require("pg"), path = require("path"), crypto = require("crypto"), fs = require("fs");
+const app = express(); app.set("trust proxy", 1); app.disable("x-powered-by");
 const url = process.env.DATABASE_URL || "";
 const pool = new Pool({ connectionString: url, ssl: url && !/localhost|127\.0\.0\.1/.test(url) ? { rejectUnauthorized: false } : false });
 const ADMIN = process.env.ADMIN_KEY || "";
-app.use(express.json({ limit: "400kb" }));
-app.use((q, s, n) => { s.set({ "X-Content-Type-Options": "nosniff", "Referrer-Policy": "same-origin" }); n(); });
+if (ADMIN.length < 12) console.warn("ATTENTION : ADMIN_KEY absente ou trop courte (12 caractères minimum, 24+ conseillés) : modération désactivée");
+const jsonBig = express.json({ limit: "400kb" }), jsonSmall = express.json({ limit: "20kb" }); // seul l'audio a besoin de gros corps
+app.use((q, s, n) => /\/audio$/.test(q.path) ? jsonBig(q, s, n) : jsonSmall(q, s, n));
+const INDEX = fs.readFileSync(path.join(__dirname, "public", "index.html"), "utf8");
+const csp = nonce => ["default-src 'self'", "script-src 'self' 'nonce-" + nonce + "'", "style-src 'self' 'unsafe-inline'", "img-src 'self' data: blob:", "media-src 'self' blob: data:",
+  "connect-src 'self' https://api.languagetool.org https://api.mymemory.translated.net", "object-src 'none'", "base-uri 'none'", "form-action 'self'", "frame-ancestors 'none'"].join("; ");
+app.use((q, s, n) => { s.set({ "X-Content-Type-Options": "nosniff", "Referrer-Policy": "same-origin", "X-Frame-Options": "DENY",
+  "Strict-Transport-Security": "max-age=31536000; includeSubDomains", "Permissions-Policy": "microphone=(self), camera=(), geolocation=(), payment=()", "Cross-Origin-Opener-Policy": "same-origin" }); n(); });
+app.use("/api", (q, s, n) => { s.set("Cache-Control", "no-store"); n(); });
+app.get(["/", "/index.html"], (q, s) => { // page servie avec un nonce CSP : seul le script de l'appli peut s'exécuter
+  const nonce = crypto.randomBytes(16).toString("base64");
+  s.set({ "Content-Security-Policy": csp(nonce), "Cache-Control": "no-cache", "Content-Type": "text/html; charset=utf-8" });
+  s.send(INDEX.replace(/<script>/g, '<script nonce="' + nonce + '">'));
+});
 
-const hits = new Map();
-setInterval(() => hits.clear(), 3600e3);
-function limit(q, s, n) {
-  const a = (hits.get(q.ip) || []); if (a.length >= 40) return s.status(429).json({ error: "Trop de contributions, réessaie plus tard" });
-  a.push(1); hits.set(q.ip, a); n();
-}
+const mk = (max, msg) => { const m = new Map(); setInterval(() => m.clear(), 3600e3).unref();
+  return (q, s, n) => { const c = m.get(q.ip) || 0; if (c >= max) return s.status(429).json({ error: msg }); m.set(q.ip, c + 1); n(); }; };
+const limit = mk(40, "Trop de contributions, réessaie plus tard"), readLimit = mk(1500, "Trop de requêtes, réessaie plus tard");
+const who = q => crypto.createHash("sha256").update((process.env.IP_SALT || ADMIN || "tal") + "|" + q.ip).digest("hex").slice(0, 32);
 function safeEq(a, b) { const x = Buffer.from(a), y = Buffer.from(b); return x.length === y.length && crypto.timingSafeEqual(x, y); }
-const isAdmin = q => ADMIN.length >= 12 && !!q.get("x-admin-key") && safeEq(q.get("x-admin-key"), ADMIN);
-const need = (q, s, n) => isAdmin(q) ? n() : s.status(401).json({ error: "Clé modérateur requise" });
+const bad = new Map(); setInterval(() => bad.clear(), 3600e3).unref(); // essais de clé ratés par IP
+const blocked = q => (bad.get(q.ip) || 0) >= 10;
+const isAdmin = q => { const k = q.get("x-admin-key"); if (!k || ADMIN.length < 12 || blocked(q)) return false; if (safeEq(k, ADMIN)) return true; bad.set(q.ip, (bad.get(q.ip) || 0) + 1); return false; };
+const need = (q, s, n) => blocked(q) ? s.status(429).json({ error: "Trop d’essais, réessaie dans 1 heure" }) : isAdmin(q) ? n() : s.status(401).json({ error: "Clé modérateur requise" });
 const clean = (v, m) => String(v == null ? "" : v).replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, m);
 const nk = s => clean(s, 300).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[’‘`'´]/g, "").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 const fail = (s, e) => { console.error(e); s.status(500).json({ error: "Erreur serveur" }); };
@@ -27,12 +39,14 @@ create table if not exists fixes(id serial primary key, entry_id text references
 create table if not exists langs(code text primary key, name text not null, alt text default '', region text default '', descr text default '', created_at timestamptz default now());
 create index if not exists e_word on entries(lower(word));
 create table if not exists audios(entry_id text primary key references entries(id) on delete cascade, mime text not null, data bytea not null, created_at timestamptz default now());
-create table if not exists edits(id serial primary key, entry_id text, before jsonb, created_at timestamptz default now());`;
+create table if not exists edits(id serial primary key, entry_id text, before jsonb, created_at timestamptz default now());
+create table if not exists reporters(entry_id text references entries(id) on delete cascade, h text not null, primary key(entry_id,h));
+alter table fixes add column if not exists h text;`;
 const SEL = `select e.id,e.word,e.lang,e.meaning,e.target,e.example,e.ctx,e.pron,e.region,e.variants,e.others,e.cues,e.status,e.reports,
  e.created_at as "createdAt", e.updated_at as "updatedAt", exists(select 1 from audios a where a.entry_id=e.id) as "hasAudio",
  (select coalesce(json_agg(json_build_object('text',f.text,'date',f.created_at) order by f.id),'[]'::json) from fixes f where f.entry_id=e.id) as fixes from entries e`;
 
-app.get("/api/entries", async (q, s) => {
+app.get("/api/entries", readLimit, async (q, s) => {
   try { s.json((await pool.query(SEL + (isAdmin(q) ? "" : " where e.status<>'supprimé'") + " order by e.created_at")).rows); } catch (e) { fail(s, e); }
 });
 app.post("/api/entries", limit, async (q, s) => {
@@ -48,9 +62,10 @@ app.post("/api/entries", limit, async (q, s) => {
     s.status(201).json({ ok: true, id });
   } catch (e) { fail(s, e); }
 });
-app.post("/api/entries/:id/report", limit, async (q, s) => {
+app.post("/api/entries/:id/report", limit, async (q, s) => { // un seul signalement par personne et par mot
   try {
-    await pool.query("update entries set reports=reports+1, status=case when status='validé' and reports+1>=3 then 'à corriger' else status end, updated_at=now() where id=$1 and status<>'supprimé'", [q.params.id]);
+    const r = await pool.query("insert into reporters(entry_id,h) select id,$2 from entries where id=$1 and status<>'supprimé' on conflict do nothing", [q.params.id, who(q)]);
+    if (r.rowCount) await pool.query("update entries set reports=reports+1, status=case when status='validé' and reports+1>=3 then 'à corriger' else status end, updated_at=now() where id=$1", [q.params.id]);
     s.json({ ok: true });
   } catch (e) { fail(s, e); }
 });
@@ -59,10 +74,11 @@ app.post("/api/entries/:id/fix", limit, async (q, s) => {
     const t = clean((q.body || {}).text, 500); if (!t) return s.status(400).json({ error: "Texte vide" });
     const n = await pool.query("select count(*)::int c from fixes where entry_id=$1", [q.params.id]);
     if (n.rows[0].c >= 20) return s.status(429).json({ error: "Déjà beaucoup de corrections proposées" });
-    await pool.query("insert into fixes(entry_id,text) select id,$2 from entries where id=$1 and status<>'supprimé'", [q.params.id, t]);
+    await pool.query("insert into fixes(entry_id,text,h) select id,$2,$3 from entries where id=$1 and status<>'supprimé' and not exists(select 1 from fixes where entry_id=$1 and h=$3)", [q.params.id, t, who(q)]);
     s.json({ ok: true });
   } catch (e) { fail(s, e); }
 });
+const isAudio = b => (b[0] === 0x1a && b[1] === 0x45 && b[2] === 0xdf && b[3] === 0xa3) || ["OggS", "RIFF"].includes(b.slice(0, 4).toString("latin1")) || b.slice(4, 8).toString("latin1") === "ftyp" || b.slice(0, 3).toString("latin1") === "ID3" || (b[0] === 0xff && (b[1] & 0xe0) === 0xe0);
 const MIMES = ["audio/webm", "audio/ogg", "audio/mp4", "audio/mpeg", "audio/wav", "audio/x-wav", "audio/aac"];
 app.post("/api/entries/:id/audio", limit, async (q, s) => {
   try {
@@ -70,13 +86,14 @@ app.post("/api/entries/:id/audio", limit, async (q, s) => {
     if (!MIMES.includes(mime) || typeof b.b64 !== "string" || !/^[A-Za-z0-9+/=]+$/.test(b.b64)) return s.status(400).json({ error: "Audio invalide" });
     const buf = Buffer.from(b.b64, "base64");
     if (!buf.length || buf.length > 250000) return s.status(413).json({ error: "Audio trop long (8 secondes maximum)" });
+    if (!isAudio(buf)) return s.status(400).json({ error: "Audio invalide" });
     const e = await pool.query("select 1 from entries where id=$1 and status<>'supprimé'", [q.params.id]);
     if (!e.rows.length) return s.status(404).json({ error: "Mot introuvable" });
     await pool.query("insert into audios(entry_id,mime,data) values($1,$2,$3) on conflict(entry_id) do nothing", [q.params.id, mime, buf]);
     s.status(201).json({ ok: true });
   } catch (e) { fail(s, e); }
 });
-app.get("/api/entries/:id/audio", async (q, s) => {
+app.get("/api/entries/:id/audio", readLimit, async (q, s) => {
   try {
     const r = await pool.query("select a.mime,a.data from audios a join entries e on e.id=a.entry_id where a.entry_id=$1" + (isAdmin(q) ? "" : " and e.status<>'supprimé'"), [q.params.id]);
     if (!r.rows.length) return s.status(404).end();
@@ -87,7 +104,7 @@ app.get("/api/entries/:id/audio", async (q, s) => {
 app.delete("/api/entries/:id/audio", need, async (q, s) => { // retrait d'une voix (modérateur)
   try { await pool.query("delete from audios where entry_id=$1", [q.params.id]); s.json({ ok: true }); } catch (e) { fail(s, e); }
 });
-app.get("/api/langs", async (q, s) => { try { s.json((await pool.query("select code,name,alt,region,descr from langs order by created_at")).rows); } catch (e) { fail(s, e); } });
+app.get("/api/langs", readLimit, async (q, s) => { try { s.json((await pool.query("select code,name,alt,region,descr from langs order by created_at")).rows); } catch (e) { fail(s, e); } });
 app.post("/api/langs", limit, async (q, s) => {
   try {
     const b = q.body || {}, name = clean(b.name, 80), code = clean(b.code, 30).toLowerCase();
@@ -128,7 +145,13 @@ app.delete("/api/entries/:id", need, async (q, s) => { // suppression douce : r�
   try { await pool.query("update entries set status='supprimé', updated_at=now() where id=$1", [q.params.id]); s.json({ ok: true }); } catch (e) { fail(s, e); }
 });
 
-app.use(express.static(path.join(__dirname, "public"), { maxAge: 0 }));
+app.use(express.static(path.join(__dirname, "public"), { maxAge: 0, index: false }));
+app.use("/api", (q, s) => s.status(404).json({ error: "Introuvable" }));
+app.use((e, q, s, n) => { // jamais de trace d'erreur envoyée au visiteur
+  if (e && e.type === "entity.too.large") return s.status(413).json({ error: "Requête trop volumineuse" });
+  if (e && (e.status === 400 || e instanceof SyntaxError)) return s.status(400).json({ error: "Requête invalide" });
+  console.error(e); s.status(500).json({ error: "Erreur serveur" });
+});
 const port = process.env.PORT || 3000;
 pool.query(INIT).then(() => app.listen(port, () => console.log("TAL sur le port " + port)))
   .catch(e => { console.error("Base de données inaccessible :", e.message); process.exit(1); });

@@ -285,7 +285,7 @@ async function saveEdit(){
  if(!x.local){
   if(!(await askAdmin()))return;
   if($("edval").checked)f.status="validé";
-  try{await api("PATCH","/entries/"+id,f)}catch(e){toast(e.status===401?"Clé modérateur refusée":"Modification impossible ("+(e.status||"réseau")+") : réessaie dans 1 minute");return}}
+  try{await api("PATCH","/entries/"+encodeURIComponent(id),f)}catch(e){toast(e.status===401?"Clé modérateur refusée":"Modification impossible ("+(e.status||"réseau")+") : réessaie dans 1 minute");return}}
  var c=getRaw();c.forEach(function(y){if(y.id===id){Object.keys(f).forEach(function(k){y[k]=f[k]});y.updatedAt=new Date().toISOString()}});saveDict(c);
  resetForm();renderDict();toast("✔ Modification enregistrée, active tout de suite");if(!x.local)pull().catch(function(){})}
 function renderDict(){
@@ -308,7 +308,7 @@ function renderDict(){
   bt("⚑ Signaler",function(){upd(x.id,function(e){e.reports=(e.reports||0)+1;if(e.status==="validé")e.status="à corriger"});queueOp({t:"report",id:x.id});toast("Signalement enregistré")});
   if(vm||x.local)bt("✏️ Modifier",function(){editEntry(x)});
   bt("🗑 Supprimer",function(){delClick(x)});
-  if(vm){[["✔ Valider","validé"],["✖ Refuser","refusé"],["⚠ À corriger","à corriger"]].forEach(function(a){bt(a[0],function(){modCall("PATCH","/entries/"+x.id,{status:a[1]})})});if(x.status==="supprimé")bt("↩ Rétablir",function(){modCall("PATCH","/entries/"+x.id,{status:"en attente"})})}
+  if(vm){[["✔ Valider","validé"],["✖ Refuser","refusé"],["⚠ À corriger","à corriger"]].forEach(function(a){bt(a[0],function(){modCall("PATCH","/entries/"+encodeURIComponent(x.id),{status:a[1]})})});if(x.status==="supprimé")bt("↩ Rétablir",function(){modCall("PATCH","/entries/"+encodeURIComponent(x.id),{status:"en attente"})})}
   box.appendChild(d)})}
 $("dtr").onclick=restoreEntry;$("edcancel").onclick=resetForm;$("dictQ").oninput=renderDict;$("dictF").onchange=renderDict;$("vmode").onchange=async function(){var me=this;
  if(!me.checked){ADMIN="";try{sessionStorage.removeItem("lt_admin");localStorage.removeItem("lt_admin")}catch(e){}renderDict();return}
@@ -458,18 +458,26 @@ function cueList(c){var o=[];String(c||"").split(/[,;]/).forEach(function(w){var
 var PERSSET={};PERS.forEach(function(w){PERSSET[w]=1});
 function choose(c,ctx,pos){
  var u=[];c.forEach(function(x){if(!u.some(function(y){return nk(y.d)===nk(x.d)}))u.push(x)});
- u.sort(function(a,b){return b.r-a.r});
+ u.sort(function(a,b){return(b.r-a.r)||((a.der||0)-(b.der||0))});
  if(u.length===1)return {d:u[0].d};
  var best=null,tie=false,bs=0;
  u.forEach(function(x){var s=0;x.cues.forEach(function(q){if(PERSSET[q]?ctx.lastIndexOf(q)>pos:ctx.indexOf(q)>=0)s++});if(s>bs){bs=s;best=x;tie=false}else if(s===bs&&s>0)tie=true});
  if(best&&!tie)return {d:best.d};
  return {d:u[0].d,amb:1,alts:u.slice(1).map(function(x){return x.d})}}
+// Formes conjuguées d'un verbe français du dictionnaire (« fuir » → fui, fuit, fuyons…) pour retrouver le mot nouchi depuis une phrase conjuguée
+function frForms(inf){inf=String(inf).trim().toLowerCase();if(wordsOf(inf).length!==1||NOCOMP[inf])return [];
+ var o=[],i,f,ok=function(w){return w&&w.length>=3&&w!==inf&&!KEEP[w]&&!AUXA[w]&&!DETS[w]&&!DETP[w]&&!CLIT[w]&&!PRON.hasOwnProperty(w)};
+ try{for(i=0;i<6;i++){f=conjPresent(inf,i);if(f)o.push(f)}
+  var pp=pastPart(inf);if(pp)o.push(pp);
+  var n1=conjPresent(inf,3);if(n1&&/ons$/.test(n1)){var st=n1.slice(0,-3);["ais","ais","ait","ions","iez","aient"].forEach(function(e){o.push(st+e)})}
+  var fs=inf.replace(/e$/,"");["ai","as","a","ons","ez","ont"].forEach(function(e){o.push(fs+e)})}catch(e){}
+ return o.filter(function(w,k){return ok(w)&&o.indexOf(w)===k})}
 function dictSub(txt,f,t){
  var pairs={},rk={"validé":2,"en attente":1},maxn=1;
  function add(s,o){var k=kk(s,f[1]);(pairs[k]=pairs[k]||[]).push(o);maxn=Math.max(maxn,nk(s).split(" ").length+(isLoc(f[1])?1:0))}
  getDict().forEach(function(x){if(x.status==="refusé"||x.word===PLH)return;var r=rk[x.status]||0;
   if(x.lang===f[1]&&x.target===t[1])senses(x).forEach(function(z){add(x.word,{d:(t[1]==="fr"&&!/nom propre/i.test(x.ctx||""))?lcFirst(z.d):z.d,r:r,cues:cueList(z.cues+","+(x.cues||""))})});
-  else if(x.target===f[1]&&x.lang===t[1])senses(x).forEach(function(z){add(z.d,{d:x.word,r:r,cues:[]})})});
+  else if(x.target===f[1]&&x.lang===t[1])senses(x).forEach(function(z){add(z.d,{d:x.word,r:r,cues:[]});if(f[1]==="fr"&&isInf(z.d))frForms(z.d).forEach(function(g){add(g,{d:x.word,r:r,cues:[],der:1})})})});
  var tk=String(txt).trim().split(/\s+/),ctx=tk.map(function(w){return nk(w)}),out=[],marks=[],hit=0,amb=[],i=0;
  tk.forEach(function(w,ix){if(ix>0&&/^\p{Lu}\p{L}+$/u.test(w))ctx[ix]="personne"});
  function look(i){var n,key,p,loc=isLoc(f[1]);
@@ -522,7 +530,7 @@ function speak(txt,l,cb){var done=false,fin=function(){if(!done){done=true;if(cb
 
 
 // ---------- Base partagée (serveur) + secours hors ligne ----------
-var API="/api",ONLINE=false,ADMIN="",syncing=false;try{ADMIN=sessionStorage.getItem("lt_admin")||localStorage.getItem("lt_admin")||""}catch(e){}
+var API="/api",ONLINE=false,ADMIN="",syncing=false;try{ADMIN=sessionStorage.getItem("lt_admin")||"";localStorage.removeItem("lt_admin")}catch(e){}
 async function api(m,p,b){var hd={};if(b)hd["Content-Type"]="application/json";if(ADMIN)hd["x-admin-key"]=ADMIN;
  var r=await fetch(API+p,{method:m,headers:hd,body:b?JSON.stringify(b):undefined});
  if(!r.ok){var e=new Error("HTTP "+r.status);e.status=r.status;throw e}return r.json()}
@@ -546,11 +554,11 @@ async function syncNow(){if(syncing){again=true;return}syncing=true;
    var c=getRaw();c.forEach(function(y){if(y.id===x.id)delete y.local});saveDict(c)}
   raw=getRaw();
   for(i=0;i<raw.length;i++){x=raw[i];if(!x.audio||x.local)continue;
-   try{await api("POST","/entries/"+x.id+"/audio",x.audio)}catch(e){if(!permanent(e))throw e}
+   try{await api("POST","/entries/"+encodeURIComponent(x.id)+"/audio",x.audio)}catch(e){if(!permanent(e))throw e}
    c=getRaw();c.forEach(function(y){if(y.id===x.id){delete y.audio;y.hasAudio=true}});saveDict(c)}
   var o=ops();
   while(o.length){var p=o[0];
-   try{if(p.t==="fix")await api("POST","/entries/"+p.id+"/fix",{text:p.text});else if(p.t==="report")await api("POST","/entries/"+p.id+"/report",{});else if(p.t==="lang")await api("POST","/langs",p.lang)}catch(e){if(!permanent(e))throw e}
+   try{if(p.t==="fix")await api("POST","/entries/"+encodeURIComponent(p.id)+"/fix",{text:p.text});else if(p.t==="report")await api("POST","/entries/"+encodeURIComponent(p.id)+"/report",{});else if(p.t==="lang")await api("POST","/langs",p.lang)}catch(e){if(!permanent(e))throw e}
    o.shift();sv("lt_ops",o)}
   await pull()}
  catch(e){ONLINE=false;status()}
@@ -560,14 +568,14 @@ async function askAdmin(){
  var k=prompt("Clé modérateur (secrète) :");if(!k)return false;
  ADMIN=k;
  try{await api("GET","/admin/check")}catch(e){ADMIN="";toast(e.status===401?"Clé refusée":"Serveur injoignable, réessaie dans 1 minute");return false}
- try{sessionStorage.setItem("lt_admin",k);if(confirm("Rester modérateur sur cet appareil ?"))localStorage.setItem("lt_admin",k)}catch(e){}
+ try{sessionStorage.setItem("lt_admin",k)}catch(e){}
  $("vmode").checked=true;try{await pull()}catch(e){}return true}
 async function modCall(m,p,b){try{await api(m,p,b);await pull();toast("✔ Fait")}catch(e){toast(e.status===401?"Clé modérateur refusée":"Action impossible ("+(e.status||"réseau")+") : réessaie dans 1 minute")}}
 async function delClick(x){
  if(!confirm("Supprimer « "+x.word+" → "+x.meaning+" » ?"))return;
  if(x.local){delEntry(x.id);return}
  if(!(await askAdmin()))return;
- modCall("DELETE","/entries/"+x.id)}
+ modCall("DELETE","/entries/"+encodeURIComponent(x.id))}
 
 // ---------- Partage ----------
 var PROD="https://live-traducteur-afrique.onrender.com/",QR_SVG="<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 37 37\" width=\"370\" height=\"370\" shape-rendering=\"crispEdges\"><rect width=\"37\" height=\"37\" fill=\"#fff\"/><path fill=\"#000\" d=\"M4 4h7v1h-7zM13 4h1v1h-1zM17 4h1v1h-1zM20 4h1v1h-1zM23 4h2v1h-2zM26 4h7v1h-7zM4 5h1v1h-1zM10 5h1v1h-1zM12 5h2v1h-2zM15 5h8v1h-8zM24 5h1v1h-1zM26 5h1v1h-1zM32 5h1v1h-1zM4 6h1v1h-1zM6 6h3v1h-3zM10 6h1v1h-1zM13 6h3v1h-3zM19 6h2v1h-2zM22 6h1v1h-1zM24 6h1v1h-1zM26 6h1v1h-1zM28 6h3v1h-3zM32 6h1v1h-1zM4 7h1v1h-1zM6 7h3v1h-3zM10 7h1v1h-1zM12 7h2v1h-2zM15 7h1v1h-1zM17 7h3v1h-3zM21 7h2v1h-2zM24 7h1v1h-1zM26 7h1v1h-1zM28 7h3v1h-3zM32 7h1v1h-1zM4 8h1v1h-1zM6 8h3v1h-3zM10 8h1v1h-1zM14 8h1v1h-1zM16 8h1v1h-1zM20 8h5v1h-5zM26 8h1v1h-1zM28 8h3v1h-3zM32 8h1v1h-1zM4 9h1v1h-1zM10 9h1v1h-1zM12 9h1v1h-1zM14 9h1v1h-1zM18 9h2v1h-2zM24 9h1v1h-1zM26 9h1v1h-1zM32 9h1v1h-1zM4 10h7v1h-7zM12 10h1v1h-1zM14 10h1v1h-1zM16 10h1v1h-1zM18 10h1v1h-1zM20 10h1v1h-1zM22 10h1v1h-1zM24 10h1v1h-1zM26 10h7v1h-7zM16 11h1v1h-1zM24 11h1v1h-1zM4 12h5v1h-5zM10 12h5v1h-5zM16 12h6v1h-6zM25 12h1v1h-1zM27 12h1v1h-1zM29 12h1v1h-1zM31 12h1v1h-1zM4 13h6v1h-6zM11 13h3v1h-3zM20 13h1v1h-1zM22 13h5v1h-5zM28 13h1v1h-1zM32 13h1v1h-1zM4 14h2v1h-2zM8 14h4v1h-4zM13 14h1v1h-1zM15 14h2v1h-2zM18 14h2v1h-2zM22 14h1v1h-1zM26 14h3v1h-3zM5 15h1v1h-1zM12 15h4v1h-4zM18 15h1v1h-1zM20 15h1v1h-1zM24 15h1v1h-1zM27 15h3v1h-3zM31 15h1v1h-1zM4 16h3v1h-3zM8 16h1v1h-1zM10 16h1v1h-1zM13 16h1v1h-1zM15 16h1v1h-1zM17 16h2v1h-2zM21 16h1v1h-1zM24 16h1v1h-1zM29 16h2v1h-2zM4 17h6v1h-6zM11 17h1v1h-1zM14 17h1v1h-1zM16 17h1v1h-1zM18 17h1v1h-1zM20 17h1v1h-1zM22 17h3v1h-3zM26 17h3v1h-3zM32 17h1v1h-1zM8 18h3v1h-3zM12 18h2v1h-2zM17 18h1v1h-1zM19 18h3v1h-3zM24 18h1v1h-1zM29 18h2v1h-2zM6 19h4v1h-4zM13 19h2v1h-2zM16 19h1v1h-1zM20 19h1v1h-1zM22 19h2v1h-2zM25 19h1v1h-1zM27 19h2v1h-2zM31 19h1v1h-1zM6 20h1v1h-1zM8 20h3v1h-3zM12 20h1v1h-1zM16 20h2v1h-2zM21 20h1v1h-1zM27 20h1v1h-1zM29 20h2v1h-2zM4 21h1v1h-1zM6 21h1v1h-1zM9 21h1v1h-1zM11 21h2v1h-2zM14 21h1v1h-1zM17 21h1v1h-1zM20 21h1v1h-1zM23 21h2v1h-2zM26 21h3v1h-3zM30 21h1v1h-1zM32 21h1v1h-1zM4 22h1v1h-1zM6 22h1v1h-1zM9 22h2v1h-2zM12 22h2v1h-2zM15 22h5v1h-5zM21 22h2v1h-2zM24 22h2v1h-2zM27 22h2v1h-2zM30 22h1v1h-1zM4 23h1v1h-1zM6 23h1v1h-1zM8 23h2v1h-2zM13 23h1v1h-1zM15 23h1v1h-1zM20 23h1v1h-1zM22 23h1v1h-1zM24 23h3v1h-3zM31 23h1v1h-1zM4 24h2v1h-2zM7 24h1v1h-1zM9 24h2v1h-2zM12 24h2v1h-2zM15 24h4v1h-4zM21 24h1v1h-1zM24 24h5v1h-5zM30 24h3v1h-3zM12 25h2v1h-2zM16 25h1v1h-1zM21 25h4v1h-4zM28 25h5v1h-5zM4 26h7v1h-7zM12 26h2v1h-2zM17 26h1v1h-1zM19 26h2v1h-2zM22 26h3v1h-3zM26 26h1v1h-1zM28 26h3v1h-3zM4 27h1v1h-1zM10 27h1v1h-1zM15 27h1v1h-1zM18 27h3v1h-3zM23 27h2v1h-2zM28 27h1v1h-1zM4 28h1v1h-1zM6 28h3v1h-3zM10 28h1v1h-1zM12 28h1v1h-1zM15 28h5v1h-5zM21 28h1v1h-1zM24 28h5v1h-5zM30 28h1v1h-1zM32 28h1v1h-1zM4 29h1v1h-1zM6 29h3v1h-3zM10 29h1v1h-1zM12 29h6v1h-6zM20 29h1v1h-1zM29 29h4v1h-4zM4 30h1v1h-1zM6 30h3v1h-3zM10 30h1v1h-1zM12 30h1v1h-1zM17 30h4v1h-4zM22 30h2v1h-2zM25 30h7v1h-7zM4 31h1v1h-1zM10 31h1v1h-1zM12 31h1v1h-1zM18 31h3v1h-3zM24 31h2v1h-2zM28 31h2v1h-2zM31 31h1v1h-1zM4 32h7v1h-7zM12 32h1v1h-1zM14 32h8v1h-8zM23 32h1v1h-1zM27 32h1v1h-1zM30 32h1v1h-1z\"/></svg>";
@@ -673,7 +681,7 @@ $("tx").onkeydown=function(e){if(e.key=="Enter")send("a")};
 
 // ---------- Contribution par la voix (Équipédia) ----------
 var PLH="(à transcrire)",VC={rec:null,audio:null,t:0};
-function playEntry(x){var src=x.audio?"data:"+x.audio.mime+";base64,"+x.audio.b64:"/api/entries/"+x.id+"/audio";try{new Audio(src).play().catch(function(){toast("Lecture impossible")})}catch(e){toast("Lecture impossible")}}
+function playEntry(x){var src=x.audio?"data:"+x.audio.mime+";base64,"+x.audio.b64:"/api/entries/"+encodeURIComponent(x.id)+"/audio";try{new Audio(src).play().catch(function(){toast("Lecture impossible")})}catch(e){toast("Lecture impossible")}}
 function vcMsg(t){$("vcMsg").textContent=t}
 function altBox(input){var row=input.closest(".row")||input,b=row.nextElementSibling;if(!b||!b.classList.contains("alts")){b=document.createElement("div");b.className="alts full";row.parentNode.insertBefore(b,row.nextSibling)}return b}
 function gbKp(t){var a=[],g=t.replace(/(^|\s)g(?=[aeiouɔɛ])/gi,function(m,s){return s+"gb"}),k=t.replace(/(^|\s)k(?=[aeiouɔɛ])/gi,function(m,s){return s+"kp"});if(g!==t)a.push(g);if(k!==t)a.push(k);return a}
@@ -766,7 +774,7 @@ function dtw(a,b){var n=a.length,m=b.length;if(n>2.2*m||m>2.2*n)return Infinity;
  return prev[m]/(n+m)}
 function b64buf(b64){var bin=atob(b64),u=new Uint8Array(bin.length),i;for(i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u.buffer}
 async function refFeats(x){var key=x.id+(x.audio?":l":":s");if(FEAT[key])return FEAT[key];
- try{var ab;if(x.audio)ab=b64buf(x.audio.b64);else{var r=await fetch("/api/entries/"+x.id+"/audio");if(!r.ok)return null;ab=await r.arrayBuffer()}
+ try{var ab;if(x.audio)ab=b64buf(x.audio.b64);else{var r=await fetch("/api/entries/"+encodeURIComponent(x.id)+"/audio");if(!r.ok)return null;ab=await r.arrayBuffer()}
   var buf=await actx().decodeAudioData(ab),f=feats(resample(buf.getChannelData(0),buf.sampleRate));if(f)FEAT[key]=f;return f}catch(e){return null}}
 function voiceRefs(l){return getDict().filter(function(x){return x.lang===l[1]&&x.status!=="refusé"&&x.word!==PLH&&(x.hasAudio||x.audio)})}
 async function rankVoice(q,refs){var out=[],i;for(i=0;i<refs.length;i++){var f=await refFeats(refs[i]);if(!f)continue;var d=dtw(q,f);if(d<Infinity)out.push({x:refs[i],d:d})}
