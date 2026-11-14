@@ -1,5 +1,11 @@
 const express = require("express"), { Pool } = require("pg"), path = require("path"), crypto = require("crypto"), fs = require("fs");
 const app = express(); app.set("trust proxy", 1); app.disable("x-powered-by");
+app.use((q, s, n) => { // HTTPS obligatoire en production (Render envoie x-forwarded-proto)
+  if ((process.env.RENDER || process.env.NODE_ENV === "production") && (q.headers["x-forwarded-proto"] || "https") === "http") return s.redirect(301, "https://" + q.headers.host + q.originalUrl);
+  n();
+});
+let compression = null; try { compression = require("compression"); } catch (e) { console.warn("compression non installée : pages non compressées"); }
+if (compression) app.use(compression());
 const url = process.env.DATABASE_URL || "";
 const pool = new Pool({ connectionString: url, ssl: url && !/localhost|127\.0\.0\.1/.test(url) ? { rejectUnauthorized: false } : false });
 const ADMIN = process.env.ADMIN_KEY || "";
@@ -7,11 +13,18 @@ if (ADMIN.length < 12) console.warn("ATTENTION : ADMIN_KEY absente ou trop court
 const jsonBig = express.json({ limit: "400kb" }), jsonSmall = express.json({ limit: "20kb" }); // seul l'audio a besoin de gros corps
 app.use((q, s, n) => /\/audio$/.test(q.path) ? jsonBig(q, s, n) : jsonSmall(q, s, n));
 const INDEX = fs.readFileSync(path.join(__dirname, "public", "index.html"), "utf8");
+const esc = v => String(v).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const EMAIL = process.env.CONTACT_EMAIL ? '<a href="mailto:' + esc(process.env.CONTACT_EMAIL) + '">' + esc(process.env.CONTACT_EMAIL) + "</a>" : "adresse e-mail à renseigner par l’éditeur";
+const LEGAL = fs.readFileSync(path.join(__dirname, "pages", "legal.html"), "utf8").replace("{{EMAIL}}", EMAIL);
+const NOTFOUND = fs.readFileSync(path.join(__dirname, "pages", "404.html"), "utf8");
+const PAGE_CSP = "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'self'; frame-ancestors 'none'";
 const csp = nonce => ["default-src 'self'", "script-src 'self' 'nonce-" + nonce + "'", "style-src 'self' 'unsafe-inline'", "img-src 'self' data: blob:", "media-src 'self' blob: data:",
   "connect-src 'self' https://api.languagetool.org https://api.mymemory.translated.net", "object-src 'none'", "base-uri 'none'", "form-action 'self'", "frame-ancestors 'none'"].join("; ");
 app.use((q, s, n) => { s.set({ "X-Content-Type-Options": "nosniff", "Referrer-Policy": "same-origin", "X-Frame-Options": "DENY",
   "Strict-Transport-Security": "max-age=31536000; includeSubDomains", "Permissions-Policy": "microphone=(self), camera=(), geolocation=(), payment=()", "Cross-Origin-Opener-Policy": "same-origin" }); n(); });
 app.use("/api", (q, s, n) => { s.set("Cache-Control", "no-store"); n(); });
+app.get(["/legal", "/confidentialite", "/mentions-legales", "/conditions"], (q, s) => { s.set({ "Content-Security-Policy": PAGE_CSP, "Cache-Control": "no-cache" }); s.type("html").send(LEGAL); });
+app.get("/favicon.ico", (q, s) => { s.set("Cache-Control", "public, max-age=604800"); s.type("png").sendFile(path.join(__dirname, "public", "icon-192.png")); });
 app.get(["/", "/index.html"], (q, s) => { // page servie avec un nonce CSP : seul le script de l'appli peut s'exécuter
   const nonce = crypto.randomBytes(16).toString("base64");
   s.set({ "Content-Security-Policy": csp(nonce), "Cache-Control": "no-cache", "Content-Type": "text/html; charset=utf-8" });
@@ -41,7 +54,8 @@ create index if not exists e_word on entries(lower(word));
 create table if not exists audios(entry_id text primary key references entries(id) on delete cascade, mime text not null, data bytea not null, created_at timestamptz default now());
 create table if not exists edits(id serial primary key, entry_id text, before jsonb, created_at timestamptz default now());
 create table if not exists reporters(entry_id text references entries(id) on delete cascade, h text not null, primary key(entry_id,h));
-alter table fixes add column if not exists h text;`;
+alter table fixes add column if not exists h text;
+create table if not exists stats(day date not null, k text not null, n int not null default 0, primary key(day,k));`;
 const SEL = `select e.id,e.word,e.lang,e.meaning,e.target,e.example,e.ctx,e.pron,e.region,e.variants,e.others,e.cues,e.status,e.reports,
  e.created_at as "createdAt", e.updated_at as "updatedAt", exists(select 1 from audios a where a.entry_id=e.id) as "hasAudio",
  (select coalesce(json_agg(json_build_object('text',f.text,'date',f.created_at) order by f.id),'[]'::json) from fixes f where f.entry_id=e.id) as fixes from entries e`;
@@ -145,8 +159,21 @@ app.delete("/api/entries/:id", need, async (q, s) => { // suppression douce : r�
   try { await pool.query("update entries set status='supprimé', updated_at=now() where id=$1", [q.params.id]); s.json({ ok: true }); } catch (e) { fail(s, e); }
 });
 
-app.use(express.static(path.join(__dirname, "public"), { maxAge: 0, index: false, setHeaders: (res, f) => { if (f.endsWith("manifest.json")) res.type("application/manifest+json"); if (f.endsWith("sw.js")) res.set("Cache-Control", "no-cache"); } }));
+app.use(express.static(path.join(__dirname, "public"), { maxAge: 0, index: false, setHeaders: (res, f) => {
+  if (f.endsWith("manifest.json")) res.type("application/manifest+json");
+  if (f.endsWith("sw.js")) res.set("Cache-Control", "no-cache");
+  else if (/\.(png|jpg|svg|webp|ico)$/.test(f)) res.set("Cache-Control", "public, max-age=604800");
+} }));
+const hitLimit = mk(60, "Trop de requêtes, réessaie plus tard");
+app.post("/api/hit", hitLimit, async (q, s) => { // mesure d'audience anonyme : seulement un compteur par jour, ni IP ni identifiant
+  const e = q.body && q.body.e; if (!["visit", "app", "install"].includes(e)) return s.status(400).json({ error: "Requête invalide" });
+  try { await pool.query("insert into stats(day,k,n) values (current_date,$1,1) on conflict(day,k) do update set n=stats.n+1", [e]); s.json({ ok: true }); } catch (x) { fail(s, x); }
+});
+app.get("/api/stats", need, async (q, s) => { // réservé au modérateur : 30 derniers jours
+  try { const r = await pool.query("select to_char(day,'YYYY-MM-DD') as day, k, n from stats where day>current_date-30 order by day desc, k"); s.json(r.rows); } catch (x) { fail(s, x); }
+});
 app.use("/api", (q, s) => s.status(404).json({ error: "Introuvable" }));
+app.use((q, s, n) => { if (q.method !== "GET" && q.method !== "HEAD") return n(); s.status(404).set({ "Content-Security-Policy": PAGE_CSP, "Cache-Control": "no-cache" }).type("html").send(NOTFOUND); });
 app.use((e, q, s, n) => { // jamais de trace d'erreur envoyée au visiteur
   if (e && e.type === "entity.too.large") return s.status(413).json({ error: "Requête trop volumineuse" });
   if (e && (e.status === 400 || e instanceof SyntaxError)) return s.status(400).json({ error: "Requête invalide" });

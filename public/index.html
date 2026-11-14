@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><title>TAL – Traduction Africaine des Langues</title>
 <meta name="description" content="Traduis et enrichis les langues africaines et ivoiriennes : nouchi, dioula, baoulé…">
-<meta property="og:type" content="website"><meta property="og:title" content="TAL – Traduction Africaine des Langues">
+<link rel="canonical" href="https://live-traducteur-afrique.onrender.com/"><meta name="robots" content="index,follow"><meta property="og:type" content="website"><meta property="og:locale" content="fr_FR"><meta property="og:site_name" content="TAL"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Logo TAL – Traduction Africaine des Langues"><meta name="twitter:title" content="TAL – Traduction Africaine des Langues"><meta name="twitter:description" content="Traduis et enrichis les langues africaines et ivoiriennes : nouchi, dioula, baoulé…"><meta property="og:title" content="TAL – Traduction Africaine des Langues">
 <meta property="og:description" content="Traduis et enrichis les langues africaines et ivoiriennes : nouchi, dioula, baoulé…">
 <meta property="og:image" content="https://live-traducteur-afrique.onrender.com/og.jpg"><meta property="og:url" content="https://live-traducteur-afrique.onrender.com/">
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://live-traducteur-afrique.onrender.com/og.jpg">
-<link rel="manifest" href="/manifest.json"><link rel="icon" type="image/png" href="/icon-192.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><meta name="theme-color" content="#0a8f3d"><meta name="apple-mobile-web-app-title" content="TAL"><meta name="application-name" content="TAL"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="/manifest.json"><link rel="icon" type="image/png" href="/icon-192.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><meta name="theme-color" content="#087a34"><meta name="apple-mobile-web-app-title" content="TAL"><meta name="application-name" content="TAL"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>
-:root{--bg:#0b1b33;--card:#13294b;--ink:#f1f6ff;--mut:#9db3d6;--acc:#3ddc84;--accink:#052b14;--b:#ff9f43;--line:#24406b;--ok:#4ade80;--ko:#ff7a7a}
-@media (prefers-color-scheme:light){:root{--bg:#eaf3fb;--card:#fff;--ink:#0b1b33;--mut:#51668a;--acc:#0a8f3d;--accink:#fff;--b:#c9770a;--line:#c9d8ea;--ok:#15803d;--ko:#c02626}}
+:root{--bg:#0b1b33;--card:#13294b;--ink:#f1f6ff;--mut:#9db3d6;--acc:#3ddc84;--accink:#052b14;--b:#ff9f43;--line:#24406b;--ok:#4ade80;--ko:#ff7a7a;--bink:#1b1200}
+@media (prefers-color-scheme:light){:root{--bg:#eaf3fb;--card:#fff;--ink:#0b1b33;--mut:#51668a;--acc:#087a34;--accink:#fff;--b:#9f5900;--line:#c9d8ea;--ok:#15803d;--ko:#c02626;--bink:#ffffff}}
 *{box-sizing:border-box}html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column;max-width:640px;margin:0 auto;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 nav{display:flex;gap:6px;padding:8px 12px 0}
@@ -35,10 +35,10 @@ footer{padding:8px 12px 8px;background:var(--card);border-top:1px solid var(--li
 .row{display:flex;gap:10px}
 .mic{flex:1;border:0;border-radius:16px;padding:16px 8px;font:inherit;font-weight:700;font-size:1rem;cursor:pointer;color:var(--accink)}
 .mic small{display:block;font-weight:400;opacity:.85}
-#ma{background:var(--acc)}#mb{background:var(--b);color:#1b1200}
+#ma{background:var(--acc)}#mb{background:var(--b);color:var(--bink)}
 .mic.rec{animation:p 1s infinite}
 .orb{flex:none;width:64px;height:64px;border-radius:50%;border:0;font-size:1.8rem;background:var(--acc);color:var(--accink);cursor:pointer;box-shadow:0 0 0 6px rgba(61,220,132,.25)}
-.orb.rec{animation:p 1s infinite;background:#ef4444;color:#fff;box-shadow:0 0 0 6px rgba(239,68,68,.3)}@keyframes p{50%{transform:scale(.96);box-shadow:0 0 0 6px rgba(255,80,80,.45)}}
+.orb.rec{animation:p 1s infinite;background:#dc2626;color:#fff;box-shadow:0 0 0 6px rgba(239,68,68,.3)}@keyframes p{50%{transform:scale(.96);box-shadow:0 0 0 6px rgba(255,80,80,.45)}}
 @media (prefers-reduced-motion:reduce){.mic.rec,.orb.rec{animation:none;outline:3px solid #ff5050}}
 .tx{display:flex;gap:6px;margin-top:10px}
 .tx button{font:inherit;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:0 12px;cursor:pointer}
@@ -92,7 +92,7 @@ footer.dock{padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px))}
 .vc{border:2px solid var(--acc);border-radius:14px;padding:12px;margin:10px 0;background:var(--card)}
 .vcb,.vcb2{display:block;width:100%;font:inherit;font-weight:700;padding:14px;border-radius:12px;border:0;margin-top:8px;cursor:pointer}
 .vcb{background:var(--acc);color:var(--accink)}.vcb2{background:var(--bg);color:var(--ink);border:1px solid var(--line);font-weight:600;padding:10px}
-.vcb.rec,.ic.rec{background:#ef4444;color:#fff;animation:p 1s infinite}
+.vcb.rec,.ic.rec{background:#dc2626;color:#fff;animation:p 1s infinite}
 [hidden]{display:none!important}
 .alts{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
 .alts small{color:var(--mut);width:100%}.alts .btn2{margin:0}
@@ -106,7 +106,7 @@ if(seen){s.remove();return}try{sessionStorage.setItem("tal_splash","1")}catch(e)
 var t0=Date.now(),done=false;function hide(){if(done)return;done=true;s.classList.add("off");setTimeout(function(){s.remove()},600)}
 function go(){setTimeout(hide,Math.max(0,1800-(Date.now()-t0)))}
 if(document.readyState==="complete")go();else window.addEventListener("load",go);setTimeout(hide,3800);s.onclick=hide})();</script>
-<div id="brand"><i></i><b>TAL</b><span>Traduction Africaine des Langues</span><small id="ver" style="margin-left:auto;color:var(--mut);font-size:.65rem">v30</small></div>
+<div id="brand"><i role="img" aria-label="Logo de TAL"></i><b>TAL</b><span>Traduction Africaine des Langues</span><small id="ver" style="margin-left:auto;color:var(--mut);font-size:.65rem">v32</small></div>
 <div id="inst" hidden><span id="instMsg"></span><button id="instGo" type="button">Installer</button><button id="instX" type="button" aria-label="Fermer">✕</button></div>
 <nav role="tablist" aria-label="Rubriques">
  <button role="tab" id="tb-c" data-v="vc" aria-selected="true">🎙️ Causerie</button>
@@ -201,6 +201,7 @@ if(document.readyState==="complete")go();else window.addEventListener("load",go)
   <button class="btn" id="instBtn" type="button" hidden></button>
   <h2 style="margin-top:18px">📤 Partager l’appli</h2>
  <p class="note">Plus on est nombreux à contribuer, plus le dictionnaire des langues africaines et ivoiriennes s’enrichit.</p>
+  <p class="note"><a href="/legal#confidentialite">Confidentialité</a> · <a href="/legal#mentions">Mentions légales</a> · <a href="/legal#conditions">Conditions d’utilisation</a></p>
  <div class="grid">
   <button class="btn full" id="shNative" style="margin:0">📲 Partager (WhatsApp, Instagram, Facebook, TikTok, X…)</button>
   <button class="btn" id="shWa" style="margin:0;background:#25d366;color:#04230f">💬 WhatsApp</button>
@@ -479,22 +480,92 @@ function frForms(inf){inf=String(inf).trim().toLowerCase();if(wordsOf(inf).lengt
   var n1=conjPresent(inf,3);if(n1&&/ons$/.test(n1)){var st=n1.slice(0,-3);["ais","ais","ait","ions","iez","aient"].forEach(function(e){o.push(st+e)})}
   var fs=inf.replace(/e$/,"");["ai","as","a","ons","ez","ont"].forEach(function(e){o.push(fs+e)})}catch(e){}
  return o.filter(function(w,k){return ok(w)&&o.indexOf(w)===k})}
+// ---- Grammaire : formes verbales, noms ↔ verbes, contexte (« il faut bara » → « il faut travailler ») ----
+var MODAL={faut:1,va:1,vas:1,vais:1,vont:1,allons:1,allez:1,veux:1,veut:1,voulons:1,voulez:1,veulent:1,peux:1,peut:1,pouvons:1,pouvez:1,peuvent:1,dois:1,doit:1,devons:1,devez:1,doivent:1,sais:1,sait:1,savons:1,savez:1,savent:1,aime:1,aimes:1,aimons:1,aiment:1,pour:1,sans:1};
+var NV={travail:"travailler",danse:"danser",chant:"chanter",jeu:"jouer",achat:"acheter",vente:"vendre",marche:"marcher",course:"courir",saut:"sauter",nage:"nager",cri:"crier",appel:"appeler",aide:"aider",demande:"demander",reponse:"répondre",lecture:"lire",ecriture:"écrire",voyage:"voyager",depart:"partir",arrivee:"arriver",sortie:"sortir",entree:"entrer",visite:"visiter",etude:"étudier",priere:"prier",pardon:"pardonner",vol:"voler",parole:"parler",discussion:"discuter",repas:"manger",sommeil:"dormir",mort:"mourir",vie:"vivre",reve:"rêver",cuisine:"cuisiner",lavage:"laver",nettoyage:"nettoyer",changement:"changer",paiement:"payer",depense:"dépenser",emprunt:"emprunter",pret:"prêter",bagarre:"se battre",fuite:"fuir",chute:"tomber",rire:"rire",pleurs:"pleurer",espoir:"espérer",attente:"attendre"};
+function nounToVerb(d){var v=NV[nk(d)];return v&&wordsOf(v).length===1?v:null}
+var SFX=["ements","ement","erions","eriez","eront","erais","erait","erons","erez","eras","erai","era","aient","ions","iez","ais","ait","ant","ons","ent","ees","ee","es","er","ez","ir","re","ai","as","e","s","t","x"].sort(function(a,b){return b.length-a.length});
+// racine d'un mot français : travail / travaille / travaillé / travailler → « travail »
+function stemFr(s){var w=nk(s),i,x;if(w.indexOf(" ")>=0||w.length<5)return null;
+ for(i=0;i<SFX.length;i++){x=SFX[i];if(w.length-x.length>=4&&w.slice(-x.length)===x){w=w.slice(0,-x.length);break}}
+ w=w.replace(/([a-z])\1$/,"$1");return w.length>=4?w:null}
+// adapte le sens choisi à la phrase : verbe après « il », « faut », « va »… ; nom après « le », « mon »…
+function gramFix(pk,cands,out){var j,k,prev=null,d=pk.d,pw,x,alt;if(wordsOf(d).length!==1)return pk;
+ for(j=out.length-1;j>=0;j--){pw=wordsOf(out[j]);x=tkn(pw[pw.length-1]);if(x==="")continue;if(CLIT[x]){if(!(DETS[x]||DETP[x]))continue;var b=j>0?wordsOf(out[j-1]):null,bt=b?tkn(b[b.length-1]):"";if(j>0&&(PRON.hasOwnProperty(bt)||CLIT[bt]))continue}prev=x;break}
+ if(prev===null)return pk;
+ var verbCtx=!!(MODAL[prev]||PRON.hasOwnProperty(prev)),nounCtx=!!(DETS[prev]||DETP[prev]),inf=isInf(d);
+ if(verbCtx&&!inf){for(k=0;k<cands.length;k++)if(isInf(cands[k].d)&&wordsOf(cands[k].d).length===1){alt=cands[k].d;break}
+  if(!alt)alt=nounToVerb(d);if(alt)return {d:alt}}
+ else if(nounCtx&&inf){for(k=0;k<cands.length;k++)if(!isInf(cands[k].d))return {d:cands[k].d}}
+ if(pk.amb&&((verbCtx&&inf)||(nounCtx&&!inf)))return {d:d};
+ return pk}
+// ---- Grammaire des langues locales : pronoms + marqueurs de temps, langue par langue (dyu, bm pour l'instant) ----
+var FRP=["je","tu","il","nous","vous","ils"],AVO=["ai","as","a","avons","avez","ont"],ETR=["suis","es","est","sommes","êtes","sont"],ALLER=["vais","vas","va","allons","allez","vont"];
+var ETRE_V={aller:1,venir:1,partir:1,arriver:1,sortir:1,entrer:1,rentrer:1,rester:1,tomber:1,"naître":1,mourir:1,devenir:1,monter:1,descendre:1,retourner:1,revenir:1};
+// pour ajouter une langue : copier ce bloc avec ses pronoms (pron), ses marqueurs (mark) et leur forme de sortie (out, pl)
+var GRAMDEF={dyu:{pron:{n:0,i:1,a:2,an:3,aw:4,u:5},mark:{ye:"perf",be:"pres",bena:"fut",na:"fut",te:"negpres",ma:"negperf"},out:{perf:"ye",pres:"bɛ",fut:"bɛna",negpres:"tɛ",negperf:"ma"},pl:["n","i","a","an","aw","u"]}};
+GRAMDEF.bm=GRAMDEF.dyu;
+var GRAMC={};
+function gramOf(lg){var d=GRAMDEF[lg],g,k;if(!d)return null;if(GRAMC[lg])return GRAMC[lg];
+ g={pron:{},mark:{},out:d.out,pl:d.pl};for(k in d.pron)g.pron[phon(k)]=d.pron[k];for(k in d.mark)g.mark[phon(k)]=d.mark[k];return GRAMC[lg]=g}
+function frTense(kind,p,iv){var vf=conjPresent(iv,p)||iv,pp=pastPart(iv)||iv,aux=ETRE_V[iv]?ETR[p]:AVO[p];
+ if(kind==="pres")return [vf];if(kind==="perf")return [aux,pp];if(kind==="fut")return [ALLER[p],iv];
+ if(kind==="negpres")return ["ne",vf,"pas"];if(kind==="negperf")return ["ne",aux,"pas",pp];return [iv]}
+// langue locale → français : « a ye baara kɛ » → « il a travaillé »
+function tenseLoc(out,meta,G){var i,j,v,mk,p,pt,sp,seq,objs,om,n=0;
+ for(i=1;i<out.length;i++){
+  if(meta[i].m)continue;mk=G.mark[phon(out[i])];if(!mk)continue;
+  v=-1;for(j=i+1;j<out.length&&j<=i+4;j++){if(meta[j].m&&meta[j].inf){v=j;break}if(!meta[j].m&&G.mark[phon(out[j])])break}
+  if(v<0||wordsOf(out[v]).length>1)continue;
+  sp=out[i-1];pt=tkn(sp);p=2;
+  if(meta[i-1].m&&PRON.hasOwnProperty(pt))p=PRON[pt];
+  else if(!meta[i-1].m&&G.pron[phon(sp)]!==undefined){p=G.pron[phon(sp)];out[i-1]=/^\p{Lu}/u.test(sp)?FRP[p].charAt(0).toUpperCase()+FRP[p].slice(1):FRP[p];meta[i-1]={m:1,inf:false,s:sp}}
+  seq=frTense(mk,p,out[v].toLowerCase());objs=out.slice(i+1,v);om=meta.slice(i+1,v);
+  out.splice.apply(out,[i,v-i+1].concat(seq,objs));
+  meta.splice.apply(meta,[i,v-i+1].concat(seq.map(function(){return {m:1,inf:false,s:""}}),om));
+  i+=seq.length-1;n++}
+ return n}
+// français → langue locale : « il a travaillé » → « a ye baara kɛ »
+function tenseRev(out,meta,G){var k,j,iv,w,pp,pf,kind,neg,sj,bl,mkr,n=0,AUXS={},ALLS={},PS={pas:1,plus:1},NE={ne:1,n:1},
+ raw=function(x,set){return x>=0&&x<meta.length&&!meta[x].m&&set[tkn(meta[x].s)]===1};
+ AVO.concat(ETR).forEach(function(x){AUXS[x]=1});ALLER.forEach(function(x){ALLS[x]=1});
+ for(k=0;k<out.length;k++){
+  if(!meta[k].m||!meta[k].iv||wordsOf(meta[k].iv).length>1)continue;iv=meta[k].iv.toLowerCase();if(!isInf(iv))continue;w=tkn(meta[k].s);
+  pp=tkn(pastPart(iv)||"");pf=[0,1,2,3,4,5].map(function(q){return tkn(conjPresent(iv,q)||"")});
+  kind=null;neg=false;bl=[];j=k-1;
+  if(pp&&w!==iv&&(w===pp||w===pp+"e"||w===pp+"s"||w===pp+"es")){if(raw(j,PS)){neg=true;bl.push(j);j--}if(raw(j,AUXS)){bl.push(j);j--;kind="perf"}}
+  else if(w===iv&&raw(j,ALLS)){kind="fut";bl.push(j);j--}
+  else if(pf.indexOf(w)>=0&&w!==iv){kind="pres";if(raw(k+1,PS)){neg=true;bl.push(k+1)}}
+  if(!kind)continue;
+  if(raw(j,NE)){neg=true;bl.push(j);j--}
+  sj=-1;if(j>=0&&j<meta.length&&!meta[j].m&&PRON.hasOwnProperty(tkn(meta[j].s)))sj=j;else if(j>=0&&!meta[j].m&&/^\p{Lu}/u.test(meta[j].s))sj=-2;
+  if(sj===-1||(neg&&kind==="fut"))continue;
+  mkr=G.out[(neg?"neg":"")+kind];if(!mkr)continue;
+  bl.forEach(function(b){out[b]=""});out[k]=mkr+" "+out[k];
+  if(sj>=0){var P=G.pl[PRON[tkn(meta[sj].s)]];out[sj]=/^\p{Lu}/u.test(meta[sj].s)?P.charAt(0).toUpperCase()+P.slice(1):P}
+  n++}
+ return n}
 function dictSub(txt,f,t){
- var pairs={},rk={"validé":2,"en attente":1},maxn=1;
- function add(s,o){var k=kk(s,f[1]);(pairs[k]=pairs[k]||[]).push(o);maxn=Math.max(maxn,nk(s).split(" ").length+(isLoc(f[1])?1:0))}
+ var G=gramOf(t[1]);if(f[1]==="fr"&&G)txt=String(txt).replace(/(^|\s)([jJnN])['’](?=\p{L})/gu,"$1$2' ");
+ var pairs={},stems={},rk={"validé":2,"en attente":1},maxn=1;
+ function add(s,o){var k=kk(s,f[1]),sk=f[1]==="fr"?stemFr(s):null;(pairs[k]=pairs[k]||[]).push(o);if(sk){var o2={},q;for(q in o)o2[q]=o[q];o2.der=1;(stems[sk]=stems[sk]||[]).push(o2)}maxn=Math.max(maxn,nk(s).split(" ").length+(isLoc(f[1])?1:0))}
  getDict().forEach(function(x){if(x.status==="refusé"||x.word===PLH)return;var r=rk[x.status]||0;
   if(x.lang===f[1]&&x.target===t[1])senses(x).forEach(function(z){add(x.word,{d:(t[1]==="fr"&&!/nom propre/i.test(x.ctx||""))?lcFirst(z.d):z.d,r:r,cues:cueList(z.cues+","+(x.cues||""))})});
-  else if(x.target===f[1]&&x.lang===t[1])senses(x).forEach(function(z){add(z.d,{d:x.word,r:r,cues:[]});if(f[1]==="fr"&&isInf(z.d))frForms(z.d).forEach(function(g){add(g,{d:x.word,r:r,cues:[],der:1})})})});
- var tk=String(txt).trim().split(/\s+/),ctx=tk.map(function(w){return nk(w)}),out=[],marks=[],hit=0,amb=[],i=0;
+  else if(x.target===f[1]&&x.lang===t[1])senses(x).forEach(function(z){add(z.d,{d:x.word,r:r,cues:[],iv:(f[1]==="fr"&&isInf(z.d))?z.d:null});if(f[1]==="fr"&&isInf(z.d))frForms(z.d).forEach(function(g){add(g,{d:x.word,r:r,cues:[],der:1,iv:z.d})})})});
+ var tk=String(txt).trim().split(/\s+/),ctx=tk.map(function(w){return nk(w)}),out=[],meta=[],marks=[],hit=0,amb=[],i=0;
  tk.forEach(function(w,ix){if(ix>0&&/^\p{Lu}\p{L}+$/u.test(w))ctx[ix]="personne"});
  function look(i){var n,key,p,loc=isLoc(f[1]);
   for(n=Math.min(maxn,tk.length-i);n>=1;n--){key=kk(tk.slice(i,i+n).join(" "),f[1]);p=pairs[key];if(p)return {c:p,n:n}}
+  if(f[1]==="fr"&&!KEEP[tkn(tk[i])]){var sk=stemFr(tk[i]);if(sk&&stems[sk])return {c:stems[sk],n:1}}
   return null}
  while(i<tk.length){var lk=look(i),cands=lk?lk.c:null,n=lk?lk.n:0;
-  if(cands){var pk=choose(cands,ctx,i+n-1);if(pk.amb)amb.push("« "+tk.slice(i,i+n).join(" ")+" » = "+pk.d+" (autre sens : "+pk.alts.join(", ")+")");out.push(pk.d);if(t[1]==="fr"&&isInf(pk.d))marks.push(out.length-1);hit++;i+=n}else{out.push(tk[i]);i++}}
+  if(cands){var pk=choose(cands,ctx,i+n-1),cc=null;if(t[1]==="fr")pk=gramFix(pk,cands,out);cands.forEach(function(c){if(!cc&&c.d===pk.d)cc=c});if(pk.amb)amb.push("« "+tk.slice(i,i+n).join(" ")+" » = "+pk.d+" (autre sens : "+pk.alts.join(", ")+")");out.push(pk.d);meta.push({m:1,inf:t[1]==="fr"&&isInf(pk.d),iv:cc&&cc.iv||null,s:tk.slice(i,i+n).join(" ")});if(t[1]==="fr"&&isInf(pk.d))marks.push(out.length-1);hit++;i+=n}else{out.push(tk[i]);meta.push({m:0,s:tk[i]});i++}}
+ var Gf=gramOf(f[1]);
+ if(Gf&&t[1]==="fr"&&tenseLoc(out,meta,Gf)){marks=[];meta.forEach(function(m,ix){if(m.inf)marks.push(ix)})}
+ if(G&&f[1]==="fr")tenseRev(out,meta,G);
  marks.forEach(function(ix){out[ix]=conjFix(out,ix)});
- var res=[];out.forEach(function(w){if(!res.length||nk(res[res.length-1])!==nk(w))res.push(w)});
- return {text:res.join(" "),hit:hit,amb:amb}}
+ var res=[];out.forEach(function(w){if(!w)return;if(!res.length||nk(res[res.length-1])!==nk(w))res.push(w)});
+ return {text:res.join(" ").replace(/(^|\s)([jJnN])' /g,"$1$2’"),hit:hit,amb:amb}}
 async function mt(txt,f,t){var res=await fetch("https://api.mymemory.translated.net/get?q="+encodeURIComponent(txt)+"&langpair="+f[1]+"|"+t[1]),j=await res.json();
  if(j&&j.responseStatus==200&&j.responseData&&j.responseData.translatedText)return j.responseData.translatedText;
  throw new Error("Traduction indisponible")}
@@ -847,8 +918,10 @@ function instUI(){INFO=instInfo();$("instTxt").textContent=INFO.t;var bt=$("inst
  var x=0;try{x=+localStorage.getItem("tal_inst_x")||0}catch(e){}
  var show=!STANDALONE&&Date.now()-x>7*864e5;$("inst").hidden=!show;
  if(show){$("instMsg").textContent=INAPP?"Ouvre TAL dans Chrome ou Safari pour l’installer":"📲 Installe TAL sur ton écran d’accueil";$("instGo").textContent=INAPP?"Comment ?":"Installer"}}
+function hit(e){try{fetch("/api/hit",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({e:e}),keepalive:true}).catch(function(){})}catch(x){}}
+try{if(!sessionStorage.getItem("tal_hit")){sessionStorage.setItem("tal_hit","1");hit(STANDALONE?"app":"visit")}}catch(x){}
 window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();DEF=e;instUI()});
-window.addEventListener("appinstalled",function(){DEF=null;STANDALONE=true;toast("✔ TAL est installée sur ton écran d’accueil");instUI()});
+window.addEventListener("appinstalled",function(){DEF=null;STANDALONE=true;hit("install");toast("✔ TAL est installée sur ton écran d’accueil");instUI()});
 $("instBtn").onclick=function(){if(INFO&&INFO.a)INFO.a()};
 $("instGo").onclick=function(){if(DEF&&INFO&&INFO.a&&!INAPP)INFO.a();else goInstall()};
 $("instX").onclick=function(){try{localStorage.setItem("tal_inst_x",String(Date.now()))}catch(e){}$("inst").hidden=true};
