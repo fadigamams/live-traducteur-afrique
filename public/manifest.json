@@ -1,14 +1,26 @@
 {
+ "id": "/",
  "name": "TAL – Traduction Africaine des Langues",
  "short_name": "TAL",
  "description": "Traduis et enrichis les langues africaines et ivoiriennes",
  "start_url": "/",
  "scope": "/",
  "display": "standalone",
+ "display_override": [
+  "standalone",
+  "minimal-ui"
+ ],
  "orientation": "portrait",
  "background_color": "#ffffff",
  "theme_color": "#0a8f3d",
  "lang": "fr",
+ "dir": "ltr",
+ "categories": [
+  "education",
+  "utilities",
+  "productivity"
+ ],
+ "prefer_related_applications": false,
  "icons": [
   {
    "src": "/icon-192.png",

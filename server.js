@@ -145,7 +145,7 @@ app.delete("/api/entries/:id", need, async (q, s) => { // suppression douce : r�
   try { await pool.query("update entries set status='supprimé', updated_at=now() where id=$1", [q.params.id]); s.json({ ok: true }); } catch (e) { fail(s, e); }
 });
 
-app.use(express.static(path.join(__dirname, "public"), { maxAge: 0, index: false }));
+app.use(express.static(path.join(__dirname, "public"), { maxAge: 0, index: false, setHeaders: (res, f) => { if (f.endsWith("manifest.json")) res.type("application/manifest+json"); if (f.endsWith("sw.js")) res.set("Cache-Control", "no-cache"); } }));
 app.use("/api", (q, s) => s.status(404).json({ error: "Introuvable" }));
 app.use((e, q, s, n) => { // jamais de trace d'erreur envoyée au visiteur
   if (e && e.type === "entity.too.large") return s.status(413).json({ error: "Requête trop volumineuse" });

@@ -5,7 +5,7 @@
 <meta property="og:description" content="Traduis et enrichis les langues africaines et ivoiriennes : nouchi, dioula, baoulé…">
 <meta property="og:image" content="https://live-traducteur-afrique.onrender.com/og.jpg"><meta property="og:url" content="https://live-traducteur-afrique.onrender.com/">
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://live-traducteur-afrique.onrender.com/og.jpg">
-<link rel="manifest" href="/manifest.json"><link rel="icon" type="image/png" href="/icon-192.png"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><meta name="theme-color" content="#0a8f3d"><meta name="apple-mobile-web-app-title" content="TAL"><meta name="application-name" content="TAL">
+<link rel="manifest" href="/manifest.json"><link rel="icon" type="image/png" href="/icon-192.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><meta name="theme-color" content="#0a8f3d"><meta name="apple-mobile-web-app-title" content="TAL"><meta name="application-name" content="TAL"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>
 :root{--bg:#0b1b33;--card:#13294b;--ink:#f1f6ff;--mut:#9db3d6;--acc:#3ddc84;--accink:#052b14;--b:#ff9f43;--line:#24406b;--ok:#4ade80;--ko:#ff7a7a}
@@ -96,6 +96,9 @@ footer.dock{padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px))}
 [hidden]{display:none!important}
 .alts{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
 .alts small{color:var(--mut);width:100%}.alts .btn2{margin:0}
+#inst{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--acc);color:var(--accink);font-size:.85rem;font-weight:700}
+#inst span{flex:1}#inst button{font:inherit;font-weight:700;border:0;border-radius:10px;padding:8px 12px;cursor:pointer;background:var(--accink);color:var(--acc)}
+#inst #instX{background:transparent;color:inherit;padding:8px 6px}
 </style></head><body>
 <div id="splash" role="img" aria-label="TAL, Traduction Africaine des Langues"><div class="lg"></div><p>Parle · Traduis · Partage nos langues</p><div class="sbar"><i></i></div></div>
 <script>(function(){var s=document.getElementById("splash"),seen=false;try{seen=sessionStorage.getItem("tal_splash")}catch(e){}
@@ -103,7 +106,8 @@ if(seen){s.remove();return}try{sessionStorage.setItem("tal_splash","1")}catch(e)
 var t0=Date.now(),done=false;function hide(){if(done)return;done=true;s.classList.add("off");setTimeout(function(){s.remove()},600)}
 function go(){setTimeout(hide,Math.max(0,1800-(Date.now()-t0)))}
 if(document.readyState==="complete")go();else window.addEventListener("load",go);setTimeout(hide,3800);s.onclick=hide})();</script>
-<div id="brand"><i></i><b>TAL</b><span>Traduction Africaine des Langues</span><small id="ver" style="margin-left:auto;color:var(--mut);font-size:.65rem">v29</small></div>
+<div id="brand"><i></i><b>TAL</b><span>Traduction Africaine des Langues</span><small id="ver" style="margin-left:auto;color:var(--mut);font-size:.65rem">v30</small></div>
+<div id="inst" hidden><span id="instMsg"></span><button id="instGo" type="button">Installer</button><button id="instX" type="button" aria-label="Fermer">✕</button></div>
 <nav role="tablist" aria-label="Rubriques">
  <button role="tab" id="tb-c" data-v="vc" aria-selected="true">🎙️ Causerie</button>
  <button role="tab" id="tb-e" data-v="ve" aria-selected="false">🌍 Équipédia</button>
@@ -192,7 +196,10 @@ if(document.readyState==="complete")go();else window.addEventListener("load",go)
  <p class="note">1) Collecter des mots dans Équipédia, validés par des locuteurs. 2) Choisir un moteur qui supporte la langue (ou entraîner un modèle sur ces données). 3) Mettre un petit serveur (clé API gardée côté serveur, jamais dans ce fichier) et une base partagée. 4) Seulement ensuite, activer la langue comme « traduisible ».</p>
 </div></section>
 <section class="view" id="vp"><div class="scroll">
- <h2>📤 Partager l’appli</h2>
+ <h2 id="instBox">📲 Installer TAL (écran d’accueil)</h2>
+  <p class="note" id="instTxt"></p>
+  <button class="btn" id="instBtn" type="button" hidden></button>
+  <h2 style="margin-top:18px">📤 Partager l’appli</h2>
  <p class="note">Plus on est nombreux à contribuer, plus le dictionnaire des langues africaines et ivoiriennes s’enrichit.</p>
  <div class="grid">
   <button class="btn full" id="shNative" style="margin:0">📲 Partager (WhatsApp, Instagram, Facebook, TikTok, X…)</button>
@@ -579,7 +586,7 @@ async function delClick(x){
 
 // ---------- Partage ----------
 var PROD="https://live-traducteur-afrique.onrender.com/",QR_SVG="<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 37 37\" width=\"370\" height=\"370\" shape-rendering=\"crispEdges\"><rect width=\"37\" height=\"37\" fill=\"#fff\"/><path fill=\"#000\" d=\"M4 4h7v1h-7zM13 4h1v1h-1zM17 4h1v1h-1zM20 4h1v1h-1zM23 4h2v1h-2zM26 4h7v1h-7zM4 5h1v1h-1zM10 5h1v1h-1zM12 5h2v1h-2zM15 5h8v1h-8zM24 5h1v1h-1zM26 5h1v1h-1zM32 5h1v1h-1zM4 6h1v1h-1zM6 6h3v1h-3zM10 6h1v1h-1zM13 6h3v1h-3zM19 6h2v1h-2zM22 6h1v1h-1zM24 6h1v1h-1zM26 6h1v1h-1zM28 6h3v1h-3zM32 6h1v1h-1zM4 7h1v1h-1zM6 7h3v1h-3zM10 7h1v1h-1zM12 7h2v1h-2zM15 7h1v1h-1zM17 7h3v1h-3zM21 7h2v1h-2zM24 7h1v1h-1zM26 7h1v1h-1zM28 7h3v1h-3zM32 7h1v1h-1zM4 8h1v1h-1zM6 8h3v1h-3zM10 8h1v1h-1zM14 8h1v1h-1zM16 8h1v1h-1zM20 8h5v1h-5zM26 8h1v1h-1zM28 8h3v1h-3zM32 8h1v1h-1zM4 9h1v1h-1zM10 9h1v1h-1zM12 9h1v1h-1zM14 9h1v1h-1zM18 9h2v1h-2zM24 9h1v1h-1zM26 9h1v1h-1zM32 9h1v1h-1zM4 10h7v1h-7zM12 10h1v1h-1zM14 10h1v1h-1zM16 10h1v1h-1zM18 10h1v1h-1zM20 10h1v1h-1zM22 10h1v1h-1zM24 10h1v1h-1zM26 10h7v1h-7zM16 11h1v1h-1zM24 11h1v1h-1zM4 12h5v1h-5zM10 12h5v1h-5zM16 12h6v1h-6zM25 12h1v1h-1zM27 12h1v1h-1zM29 12h1v1h-1zM31 12h1v1h-1zM4 13h6v1h-6zM11 13h3v1h-3zM20 13h1v1h-1zM22 13h5v1h-5zM28 13h1v1h-1zM32 13h1v1h-1zM4 14h2v1h-2zM8 14h4v1h-4zM13 14h1v1h-1zM15 14h2v1h-2zM18 14h2v1h-2zM22 14h1v1h-1zM26 14h3v1h-3zM5 15h1v1h-1zM12 15h4v1h-4zM18 15h1v1h-1zM20 15h1v1h-1zM24 15h1v1h-1zM27 15h3v1h-3zM31 15h1v1h-1zM4 16h3v1h-3zM8 16h1v1h-1zM10 16h1v1h-1zM13 16h1v1h-1zM15 16h1v1h-1zM17 16h2v1h-2zM21 16h1v1h-1zM24 16h1v1h-1zM29 16h2v1h-2zM4 17h6v1h-6zM11 17h1v1h-1zM14 17h1v1h-1zM16 17h1v1h-1zM18 17h1v1h-1zM20 17h1v1h-1zM22 17h3v1h-3zM26 17h3v1h-3zM32 17h1v1h-1zM8 18h3v1h-3zM12 18h2v1h-2zM17 18h1v1h-1zM19 18h3v1h-3zM24 18h1v1h-1zM29 18h2v1h-2zM6 19h4v1h-4zM13 19h2v1h-2zM16 19h1v1h-1zM20 19h1v1h-1zM22 19h2v1h-2zM25 19h1v1h-1zM27 19h2v1h-2zM31 19h1v1h-1zM6 20h1v1h-1zM8 20h3v1h-3zM12 20h1v1h-1zM16 20h2v1h-2zM21 20h1v1h-1zM27 20h1v1h-1zM29 20h2v1h-2zM4 21h1v1h-1zM6 21h1v1h-1zM9 21h1v1h-1zM11 21h2v1h-2zM14 21h1v1h-1zM17 21h1v1h-1zM20 21h1v1h-1zM23 21h2v1h-2zM26 21h3v1h-3zM30 21h1v1h-1zM32 21h1v1h-1zM4 22h1v1h-1zM6 22h1v1h-1zM9 22h2v1h-2zM12 22h2v1h-2zM15 22h5v1h-5zM21 22h2v1h-2zM24 22h2v1h-2zM27 22h2v1h-2zM30 22h1v1h-1zM4 23h1v1h-1zM6 23h1v1h-1zM8 23h2v1h-2zM13 23h1v1h-1zM15 23h1v1h-1zM20 23h1v1h-1zM22 23h1v1h-1zM24 23h3v1h-3zM31 23h1v1h-1zM4 24h2v1h-2zM7 24h1v1h-1zM9 24h2v1h-2zM12 24h2v1h-2zM15 24h4v1h-4zM21 24h1v1h-1zM24 24h5v1h-5zM30 24h3v1h-3zM12 25h2v1h-2zM16 25h1v1h-1zM21 25h4v1h-4zM28 25h5v1h-5zM4 26h7v1h-7zM12 26h2v1h-2zM17 26h1v1h-1zM19 26h2v1h-2zM22 26h3v1h-3zM26 26h1v1h-1zM28 26h3v1h-3zM4 27h1v1h-1zM10 27h1v1h-1zM15 27h1v1h-1zM18 27h3v1h-3zM23 27h2v1h-2zM28 27h1v1h-1zM4 28h1v1h-1zM6 28h3v1h-3zM10 28h1v1h-1zM12 28h1v1h-1zM15 28h5v1h-5zM21 28h1v1h-1zM24 28h5v1h-5zM30 28h1v1h-1zM32 28h1v1h-1zM4 29h1v1h-1zM6 29h3v1h-3zM10 29h1v1h-1zM12 29h6v1h-6zM20 29h1v1h-1zM29 29h4v1h-4zM4 30h1v1h-1zM6 30h3v1h-3zM10 30h1v1h-1zM12 30h1v1h-1zM17 30h4v1h-4zM22 30h2v1h-2zM25 30h7v1h-7zM4 31h1v1h-1zM10 31h1v1h-1zM12 31h1v1h-1zM18 31h3v1h-3zM24 31h2v1h-2zM28 31h2v1h-2zM31 31h1v1h-1zM4 32h7v1h-7zM12 32h1v1h-1zM14 32h8v1h-8zM23 32h1v1h-1zM27 32h1v1h-1zM30 32h1v1h-1z\"/></svg>";
-var SH_TXT="TAL – Traduction Africaine des Langues : traduis et enrichis les langues africaines et ivoiriennes (nouchi, dioula, baoulé…) 🌍";
+var SH_TXT="TAL – Traduction Africaine des Langues : traduis et enrichis les langues africaines et ivoiriennes (nouchi, dioula, baoulé…) 🌍 Ouvre le lien dans Chrome ou Safari, puis touche « Installer ».";
 function shareUrl(){try{if(location.protocol==="https:"&&!/^(localhost|127\.)/.test(location.hostname))return location.origin+"/"}catch(e){}return PROD}
 function copyLink(msg){var u=shareUrl();
  function fb(){var t=document.createElement("textarea");t.value=u;document.body.appendChild(t);t.select();try{document.execCommand("copy")}catch(e){}document.body.removeChild(t);toast(msg||"Lien copié")}
@@ -818,4 +825,33 @@ async function listenLocal(side){
 
 refreshSel();renderDict();renderLangs();status();$("vmode").checked=!!ADMIN;$("gr").checked=ld("lt_gr",true);$("gr").onchange=function(){sv("lt_gr",this.checked)};$("vt").onclick=function(){var n=0,lc=0;try{speechSynthesis.getVoices().forEach(function(x){if(x.lang.toLowerCase().indexOf("fr")===0){n++;if(x.localService)lc++}})}catch(e){}toast(n?"Voix françaises : "+n+" ("+lc+" hors ligne). Écoute…":"Aucune voix française trouvée : installe-la dans Réglages > Synthèse vocale");speak("Bonjour, ceci est un test de la voix.",L("fr"))};try{initShare()}catch(e){}syncNow();setInterval(syncNow,90000);window.addEventListener("online",syncNow);
 if(window.speechSynthesis)speechSynthesis.getVoices();
+
+// ---------- Installation sur l'écran d'accueil (téléphone, iPhone, ordinateur) ----------
+var DEF=null,UA=navigator.userAgent||"";
+var STANDALONE=(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;
+var IOS=/iPad|iPhone|iPod/.test(UA)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1),ANDROID=/Android/i.test(UA);
+var INAPP=/FBAN|FBAV|FB_IAB|Instagram|TikTok|musical_ly|BytedanceWebview|Snapchat|MicroMessenger|LinkedInApp|Twitter|; wv\)/i.test(UA);
+var SAF=IOS&&/Safari/.test(UA)&&!/CriOS|FxiOS|EdgiOS|OPiOS/.test(UA);
+function instInfo(){
+ if(STANDALONE)return {t:"✔ TAL est déjà installée sur cet appareil.",b:""};
+ if(INAPP)return {t:"Tu es dans le navigateur d’une autre appli (WhatsApp, TikTok, Facebook, Instagram…) : l’installation n’y est pas possible. Touche ⋮ ou ⋯ puis « Ouvrir dans Chrome » (Android) ou « Ouvrir dans Safari » (iPhone), puis reviens ici.",b:"📋 Copier le lien",a:function(){copyLink("Lien copié : ouvre-le dans Chrome ou Safari")}};
+ if(DEF)return {t:"Installe TAL en un geste : elle apparaît sur ton écran d’accueil avec son logo et s’ouvre en plein écran.",b:"📲 Installer maintenant",a:function(){var d=DEF;DEF=null;d.prompt();d.userChoice.then(function(c){if(c&&c.outcome==="accepted")toast("Installation en cours…");instUI()}).catch(function(){instUI()})}};
+ if(IOS)return {t:"iPhone / iPad : 1) touche le bouton Partager ⬆️ (carré avec une flèche, en bas de l’écran) ; 2) fais défiler et touche « Sur l’écran d’accueil » ; 3) touche « Ajouter ». Le logo TAL apparaît sur ton écran d’accueil."+(SAF?"":" Si tu ne vois pas cette option, ouvre ce lien dans Safari."),b:""};
+ if(ANDROID)return {t:"Android : touche le menu ⋮ du navigateur, puis « Installer l’application » (ou « Ajouter à l’écran d’accueil »). Si tu ne vois pas l’option, ouvre ce lien dans Chrome. Si tu viens de WhatsApp, touche ⋮ puis « Ouvrir dans Chrome ».",b:""};
+ if(/Firefox/.test(UA))return {t:"Firefox sur ordinateur ne sait pas installer les applis web : ouvre TAL avec Chrome ou Edge.",b:"📋 Copier le lien",a:function(){copyLink("Lien copié : ouvre-le dans Chrome ou Edge")}};
+ if(/Safari/.test(UA)&&!/Chrome|Chromium|Edg/.test(UA))return {t:"Mac (Safari) : menu Fichier → « Ajouter au Dock ».",b:""};
+ return {t:"Ordinateur (Chrome ou Edge) : clique sur l’icône d’installation ⊕ à droite de la barre d’adresse, ou menu ⋮ → « Installer TAL ».",b:""}}
+var INFO=null;
+function goInstall(){var t=document.querySelector('nav button[data-v="vp"]');if(t)t.click();var b=$("instBox");if(b)b.scrollIntoView({block:"start"})}
+function instUI(){INFO=instInfo();$("instTxt").textContent=INFO.t;var bt=$("instBtn");bt.hidden=!INFO.b;bt.textContent=INFO.b||"";
+ var x=0;try{x=+localStorage.getItem("tal_inst_x")||0}catch(e){}
+ var show=!STANDALONE&&Date.now()-x>7*864e5;$("inst").hidden=!show;
+ if(show){$("instMsg").textContent=INAPP?"Ouvre TAL dans Chrome ou Safari pour l’installer":"📲 Installe TAL sur ton écran d’accueil";$("instGo").textContent=INAPP?"Comment ?":"Installer"}}
+window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();DEF=e;instUI()});
+window.addEventListener("appinstalled",function(){DEF=null;STANDALONE=true;toast("✔ TAL est installée sur ton écran d’accueil");instUI()});
+$("instBtn").onclick=function(){if(INFO&&INFO.a)INFO.a()};
+$("instGo").onclick=function(){if(DEF&&INFO&&INFO.a&&!INAPP)INFO.a();else goInstall()};
+$("instX").onclick=function(){try{localStorage.setItem("tal_inst_x",String(Date.now()))}catch(e){}$("inst").hidden=true};
+instUI();setTimeout(instUI,2500);
+if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostname==="localhost"))window.addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})});
 </script></body></html>
