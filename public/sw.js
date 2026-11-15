@@ -1,5 +1,5 @@
 // Service worker de TAL : permet l'installation et l'ouverture hors connexion
-const V = "tal-v33"; // changer ce numéro à chaque nouvelle version de l'appli
+const V = "tal-v34"; // changer ce numéro à chaque nouvelle version de l'appli
 const SHELL = ["/", "/manifest.json", "/icon-192.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(V).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(k => Promise.all(k.filter(x => x !== V).map(x => caches.delete(x)))).then(() => self.clients.claim())); });

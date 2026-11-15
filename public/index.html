@@ -106,7 +106,7 @@ if(seen){s.remove();return}try{sessionStorage.setItem("tal_splash","1")}catch(e)
 var t0=Date.now(),done=false;function hide(){if(done)return;done=true;s.classList.add("off");setTimeout(function(){s.remove()},600)}
 function go(){setTimeout(hide,Math.max(0,1800-(Date.now()-t0)))}
 if(document.readyState==="complete")go();else window.addEventListener("load",go);setTimeout(hide,3800);s.onclick=hide})();</script>
-<div id="brand"><i role="img" aria-label="Logo de TAL"></i><b>TAL</b><span>Traduction Africaine des Langues</span><small id="ver" style="margin-left:auto;color:var(--mut);font-size:.65rem">v33</small></div>
+<div id="brand"><i role="img" aria-label="Logo de TAL"></i><b>TAL</b><span>Traduction Africaine des Langues</span><small id="ver" style="margin-left:auto;color:var(--mut);font-size:.65rem">v34</small></div>
 <div id="inst" hidden><span id="instMsg"></span><button id="instGo" type="button">Installer</button><button id="instX" type="button" aria-label="Fermer">✕</button></div>
 <nav role="tablist" aria-label="Rubriques">
  <button role="tab" id="tb-c" data-v="vc" aria-selected="true">🎙️ Causerie</button>
@@ -224,11 +224,115 @@ if(document.readyState==="complete")go();else window.addEventListener("load",go)
 <div id="toast" role="status"></div>
 <script>
 // caps : m = traduction automatique tentée, s = reconnaissance vocale, v = voix de lecture
-var BASE=[
-["fr-FR","fr","Français","msv"],["en-US","en","English","msv"],["es-ES","es","Español","msv"],["pt-PT","pt","Português","msv"],["ar-SA","ar","العربية","msv"],["de-DE","de","Deutsch","msv"],["it-IT","it","Italiano","msv"],["zh-CN","zh","中文","msv"],["sw-KE","sw","Kiswahili","ms"],
-["dyu","dyu","Dioula","" ],["mlq","mlq","Malinké (Maninka)",""],["mxx","mxx","Mahouka (Mahou)",""],["bci","bci","Baoulé",""],["bet","bet","Bété",""],["any","any","Agni",""],["sef","sef","Sénoufo (variété à préciser)",""],["wec","wec","Guéré",""],["nouchi","nouchi","Nouchi (jargon ivoirien)",""],
-["ha","ha","Haoussa","m"],["yo","yo","Yorùbá","m"],["bm","bm","Bambara",""],["mos","mos","Mooré",""],["wo","wo","Wolof","m"],["ff","ff","Fulfuldé",""],["ln","ln","Lingala","m"],["ee","ee","Éwé",""],["ig","ig","Igbo","m"],["ak","ak","Akan",""]
+var INTL=[
+["fr-FR","fr","Français","msv"],["en-US","en","English","msv"],["es-ES","es","Español","msv"],["pt-PT","pt","Português","msv"],["ar-SA","ar","العربية","msv"],["de-DE","de","Deutsch","msv"],["it-IT","it","Italiano","msv"],["zh-CN","zh","中文","msv"],["sw-KE","sw","Kiswahili","ms"]
+],IVO=[
+["dyu","dyu","Dioula",""],
+["mlq","mlq","Malinké (Maninka)",""],
+["mxx","mxx","Mahouka (Mahou)",""],
+["bci","bci","Baoulé",""],
+["bet","bet","Bété",""],
+["any","any","Agni",""],
+["sef","sef","Sénoufo (variété à préciser)",""],
+["wec","wec","Guéré",""],
+["nouchi","nouchi","Nouchi (jargon ivoirien)",""],
+["aba","aba","Abbey (Abé)",""],
+["abi","abi","Abidji",""],
+["abr","abr","Abron (Bron)",""],
+["adj","adj","Adioukrou",""],
+["ald","ald","Alladian",""],
+["ati","ati","Attié (Akyé)",""],
+["avi","avi","Avikam",""],
+["bjw","bjw","Bakwé",""],
+["nhb","nhb","Béng",""],
+["dnj","dnj","Dan (Yacouba)",""],
+["dic","dic","Dida (Lakota)",""],
+["gud","gud","Dida (Yocoboué)",""],
+["dyi","dyi","Djimini (Sénoufo)",""],
+["ebr","ebr","Ébrié (Cama)",""],
+["ega","ega","Éga",""],
+["ggu","ggu","Gagou (Gban)",""],
+["god","god","Godié",""],
+["goa","goa","Gouro (Guro)",""],
+["nku","nku","Koulango (Kulango)",""],
+["kga","kga","Koyaka",""],
+["lig","lig","Ligbi",""],
+["lob","lob","Lobi",""],
+["moa","moa","Mwan",""],
+["nfr","nfr","Nafana",""],
+["ney","ney","Néyo",""],
+["sev","sev","Nyarafolo (Sénoufo)",""],
+["nzi","nzi","Nzéma",""],
+["tgw","tgw","Tagbana",""],
+["neb","neb","Toura",""],
+["wan","wan","Wan",""],
+["wob","wob","Wobé (Wè)",""],
+["yre","yre","Yaouré",""]
+],AFR=[
+["ha","ha","Haoussa","m"],
+["yo","yo","Yorùbá","m"],
+["bm","bm","Bambara",""],
+["mos","mos","Mooré",""],
+["wo","wo","Wolof","m"],
+["ff","ff","Fulfuldé",""],
+["ln","ln","Lingala","m"],
+["ee","ee","Éwé",""],
+["ig","ig","Igbo","m"],
+["ak","ak","Akan",""],
+["af","af","Afrikaans","m"],
+["am","am","Amharique (አማርኛ)","m"],
+["arz","arz","Arabe égyptien",""],
+["ary","ary","Arabe marocain (darija)",""],
+["bas","bas","Bassa (Basaa)",""],
+["bib","bib","Bissa",""],
+["bwq","bwq","Bobo",""],
+["ny","ny","Chichewa",""],
+["dgi","dgi","Dagara",""],
+["dag","dag","Dagbani",""],
+["luo","luo","Dholuo (Luo)",""],
+["dyo","dyo","Diola (Jola)",""],
+["dua","dua","Douala",""],
+["bin","bin","Édo (Bini)",""],
+["ewo","ewo","Éwondo",""],
+["fat","fat","Fanti",""],
+["fon","fon","Fon",""],
+["gaa","gaa","Ga",""],
+["gux","gux","Gourmantché",""],
+["mey","mey","Hassanya",""],
+["ibb","ibb","Ibibio",""],
+["kbp","kbp","Kabiyè",""],
+["kab","kab","Kabyle",""],
+["kr","kr","Kanuri",""],
+["kg","kg","Kikongo",""],
+["ki","ki","Kikuyu",""],
+["rw","rw","Kinyarwanda","m"],
+["rn","rn","Kirundi",""],
+["kri","kri","Krio",""],
+["lg","lg","Luganda",""],
+["mg","mg","Malgache","m"],
+["mnk","mnk","Mandinka",""],
+["gej","gej","Mina (Gen)",""],
+["om","om","Oromo",""],
+["pcm","pcm","Pidgin nigérian",""],
+["sg","sg","Sango",""],
+["srr","srr","Sérère",""],
+["st","st","Sesotho","m"],
+["tn","tn","Setswana",""],
+["sn","sn","Shona","m"],
+["so","so","Somali","m"],
+["ses","ses","Songhaï (Koyraboro Senni)",""],
+["snk","snk","Soninké",""],
+["shi","shi","Tachelhit",""],
+["taq","taq","Tamasheq (touareg)",""],
+["zgh","zgh","Tamazight (berbère)",""],
+["ti","ti","Tigrinya",""],
+["tiv","tiv","Tiv",""],
+["lua","lua","Tshiluba",""],
+["tw","tw","Twi",""],
+["xh","xh","Xhosa","m"],
+["zu","zu","Zoulou","m"]
 ];
+var BASE=INTL.concat(IVO,AFR),GROUPS=[["Langues internationales",INTL],["Langues ivoiriennes",IVO],["Langues africaines",AFR]];
 var $=function(i){return document.getElementById(i)};
 function toast(t){var o=$("toast");o.textContent=t;o.className="on";clearTimeout(toast.h);toast.h=setTimeout(function(){o.className=""},3200)}
 function ld(k,d){try{var v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}}
@@ -241,7 +345,10 @@ function L(c){var a=allLangs();for(var i=0;i<a.length;i++)if(a[i][1]===c)return 
 function lbl(l){return l[2]+(l[3].indexOf("m")<0?" (dictionnaire)":"")}
 function can(l,k){return l[3].indexOf(k)>=0}
 var A="fr",B="dyu",ss=ld("lt2",null);if(ss){A=ss[0];B=ss[1]}
-function fill(sel,val){sel.innerHTML="";allLangs().forEach(function(l){var o=document.createElement("option");o.value=l[1];o.textContent=lbl(l);sel.appendChild(o)});sel.value=val}
+function fill(sel,val){sel.innerHTML="";function add(p,l){var o=document.createElement("option");o.value=l[1];o.textContent=lbl(l);p.appendChild(o)}
+ GROUPS.forEach(function(g){var og=document.createElement("optgroup");og.label=g[0];g[1].forEach(function(l){add(og,l)});sel.appendChild(og)});
+ var oc=document.createElement("optgroup"),n=0;oc.label="Langues ajoutées";CUSTOM.forEach(function(c){if(!BASE.some(function(b){return b[1]===c.code})){add(oc,[c.code,c.code,c.name,""]);n++}});if(n)sel.appendChild(oc);
+ sel.value=val}
 function refreshSel(){fill($("la"),A);fill($("lb"),B);fill($("dictLang"),$("dictLang").getAttribute("data-v")||"nouchi");fill($("dictTarget"),$("dictTarget").getAttribute("data-v")||"fr");fill($("vcLang"),$("vcLang").getAttribute("data-v")||"nouchi");lab()}
 function lab(){$("na").textContent=L(A)[2].split(" (")[0];$("nb").textContent=L(B)[2].split(" (")[0];$("sa").setAttribute("aria-label",L(A)[2]+" → "+L(B)[2]);$("tx").placeholder="Écrire en "+L(A)[2].split(" (")[0]+" ➤ "+L(B)[2].split(" (")[0];$("sb").setAttribute("aria-label","Traduire dans l’autre sens : "+L(B)[2]+" → "+L(A)[2]);$("sb").title=L(B)[2].split(" (")[0]+" → "+L(A)[2].split(" (")[0];sv("lt2",[A,B])}
 $("la").onchange=function(){A=this.value;lab()};$("lb").onchange=function(){B=this.value;lab()};
