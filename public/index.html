@@ -106,7 +106,7 @@ if(seen){s.remove();return}try{sessionStorage.setItem("tal_splash","1")}catch(e)
 var t0=Date.now(),done=false;function hide(){if(done)return;done=true;s.classList.add("off");setTimeout(function(){s.remove()},600)}
 function go(){setTimeout(hide,Math.max(0,1800-(Date.now()-t0)))}
 if(document.readyState==="complete")go();else window.addEventListener("load",go);setTimeout(hide,3800);s.onclick=hide})();</script>
-<div id="brand"><i role="img" aria-label="Logo de TAL"></i><b>TAL</b><span>Traduction Africaine des Langues</span><small id="ver" style="margin-left:auto;color:var(--mut);font-size:.65rem">v32</small></div>
+<div id="brand"><i role="img" aria-label="Logo de TAL"></i><b>TAL</b><span>Traduction Africaine des Langues</span><small id="ver" style="margin-left:auto;color:var(--mut);font-size:.65rem">v33</small></div>
 <div id="inst" hidden><span id="instMsg"></span><button id="instGo" type="button">Installer</button><button id="instX" type="button" aria-label="Fermer">✕</button></div>
 <nav role="tablist" aria-label="Rubriques">
  <button role="tab" id="tb-c" data-v="vc" aria-selected="true">🎙️ Causerie</button>
@@ -164,6 +164,8 @@ if(document.readyState==="complete")go();else window.addEventListener("load",go)
   <div class="row full" style="gap:8px"><input id="dictMeaning" placeholder="Traduction / signification (ex. c’est un mensonge)" aria-label="Traduction"><button class="ic" type="button" data-mic="dictMeaning" aria-label="Dire à voix haute">🎤</button></div>
   <div class="row full" style="gap:8px"><input id="dictExample" placeholder="Exemple de phrase (facultatif)" aria-label="Exemple"><button class="ic" type="button" data-mic="dictExample" aria-label="Dire à voix haute">🎤</button></div>
   <input id="dictCtx" placeholder="Contexte / sens (facultatif)" aria-label="Contexte">
+  <select id="dictGram" class="full" aria-label="Mot de grammaire (facultatif)"><option value="">Petit mot de grammaire ? (facultatif)</option><option value="gram:pron:0">Pronom sujet : je</option><option value="gram:pron:1">Pronom sujet : tu</option><option value="gram:pron:2">Pronom sujet : il / elle</option><option value="gram:pron:3">Pronom sujet : nous</option><option value="gram:pron:4">Pronom sujet : vous</option><option value="gram:pron:5">Pronom sujet : ils / elles</option><option value="gram:mark:pres">Marqueur : présent</option><option value="gram:mark:perf">Marqueur : passé (accompli)</option><option value="gram:mark:fut">Marqueur : futur</option><option value="gram:mark:negpres">Marqueur : négation du présent</option><option value="gram:mark:negperf">Marqueur : négation du passé</option></select>
+  <p class="note full" style="margin:0">Pour un pronom (je, tu, il…) ou un marqueur de temps placé entre le pronom et le verbe : choisis son type, TAL pourra alors conjuguer en français. Seuls les mots validés sont utilisés.</p>
   <input id="dictPron" placeholder="Prononciation (facultatif)" aria-label="Prononciation">
   <input id="dictReg" placeholder="Région d’usage (facultatif)" aria-label="Région">
   <input id="dictVar" placeholder="Variantes d’écriture (facultatif)" aria-label="Variantes">
@@ -224,7 +226,7 @@ if(document.readyState==="complete")go();else window.addEventListener("load",go)
 // caps : m = traduction automatique tentée, s = reconnaissance vocale, v = voix de lecture
 var BASE=[
 ["fr-FR","fr","Français","msv"],["en-US","en","English","msv"],["es-ES","es","Español","msv"],["pt-PT","pt","Português","msv"],["ar-SA","ar","العربية","msv"],["de-DE","de","Deutsch","msv"],["it-IT","it","Italiano","msv"],["zh-CN","zh","中文","msv"],["sw-KE","sw","Kiswahili","ms"],
-["dyu","dyu","Dioula","" ],["mxx","mxx","Mahouka (Mahou)",""],["bci","bci","Baoulé",""],["bet","bet","Bété",""],["any","any","Agni",""],["sef","sef","Sénoufo (variété à préciser)",""],["wec","wec","Guéré",""],["nouchi","nouchi","Nouchi (jargon ivoirien)",""],
+["dyu","dyu","Dioula","" ],["mlq","mlq","Malinké (Maninka)",""],["mxx","mxx","Mahouka (Mahou)",""],["bci","bci","Baoulé",""],["bet","bet","Bété",""],["any","any","Agni",""],["sef","sef","Sénoufo (variété à préciser)",""],["wec","wec","Guéré",""],["nouchi","nouchi","Nouchi (jargon ivoirien)",""],
 ["ha","ha","Haoussa","m"],["yo","yo","Yorùbá","m"],["bm","bm","Bambara",""],["mos","mos","Mooré",""],["wo","wo","Wolof","m"],["ff","ff","Fulfuldé",""],["ln","ln","Lingala","m"],["ee","ee","Éwé",""],["ig","ig","Igbo","m"],["ak","ak","Akan",""]
 ];
 var $=function(i){return document.getElementById(i)};
@@ -274,20 +276,20 @@ function addEntry(e){
  toast(other?"Enregistré (autre sens du même mot)":"✔ Enregistré dans Équipédia");syncNow();return true}
 $("dictAdd").onclick=function(){
  if(EDIT){saveEdit();return}
- var ok=addEntry({word:$("dictWord").value,meaning:$("dictMeaning").value,lang:$("dictLang").value,target:$("dictTarget").value,example:$("dictExample").value.trim(),ctx:$("dictCtx").value.trim(),cues:$("dictCue").value.trim(),pron:$("dictPron").value.trim(),region:$("dictReg").value.trim(),variants:$("dictVar").value.trim(),others:$("dictOther").value.trim()});
- if(ok){["dictWord","dictMeaning","dictExample","dictCue","dictCtx","dictPron","dictReg","dictVar","dictOther"].forEach(function(i){$(i).value=""});$("dictQ").value="";$("dictF").value="";renderDict()}};
+ var ok=addEntry({word:$("dictWord").value,meaning:$("dictMeaning").value,lang:$("dictLang").value,target:$("dictTarget").value,example:$("dictExample").value.trim(),ctx:ctxVal(),cues:$("dictCue").value.trim(),pron:$("dictPron").value.trim(),region:$("dictReg").value.trim(),variants:$("dictVar").value.trim(),others:$("dictOther").value.trim()});
+ if(ok){["dictWord","dictMeaning","dictExample","dictCue","dictCtx","dictGram","dictPron","dictReg","dictVar","dictOther"].forEach(function(i){$(i).value=""});$("dictQ").value="";$("dictF").value="";renderDict()}};
 function upd(id,fn){var it=getDict();for(var i=0;i<it.length;i++)if(it[i].id===id){fn(it[i]);it[i].updatedAt=new Date().toISOString()}saveDict(it);renderDict()}
 function delEntry(id){var it=getDict(),k=-1;it.forEach(function(x,i){if(x.id===id)k=i});if(k<0)return;var tr0=ld("lt_trash",[]);tr0.push(it[k]);sv("lt_trash",tr0.slice(-30));it.splice(k,1);saveDict(it);renderDict();toast("Supprimé — tu peux le restaurer")}
 function restoreEntry(){var tr0=ld("lt_trash",[]),x=tr0.pop();if(!x)return;var it=getDict();if(!it.some(function(y){return y.id===x.id}))it.push(x);saveDict(it);sv("lt_trash",tr0);renderDict();toast("Mot restauré : "+x.word)}
 var EDIT=null;
-function resetForm(){["dictWord","dictMeaning","dictExample","dictCue","dictCtx","dictPron","dictReg","dictVar","dictOther"].forEach(function(i){$(i).value=""});EDIT=null;$("dictAdd").textContent="Ajouter";$("editbar").hidden=true}
+function resetForm(){["dictWord","dictMeaning","dictExample","dictCue","dictCtx","dictGram","dictPron","dictReg","dictVar","dictOther"].forEach(function(i){$(i).value=""});EDIT=null;$("dictAdd").textContent="Ajouter";$("editbar").hidden=true}
 function editEntry(x){EDIT=x.id;
  $("dictLang").value=x.lang;$("dictLang").setAttribute("data-v",x.lang);$("dictTarget").value=x.target;$("dictTarget").setAttribute("data-v",x.target);
- $("dictWord").value=x.word;$("dictMeaning").value=x.meaning;$("dictExample").value=x.example||"";$("dictCtx").value=x.ctx||"";$("dictPron").value=x.pron||"";$("dictReg").value=x.region||"";$("dictVar").value=x.variants||"";$("dictCue").value=x.cues||"";$("dictOther").value=x.others||"";
+ $("dictWord").value=x.word;$("dictMeaning").value=x.meaning;$("dictExample").value=x.example||"";$("dictCtx").value=String(x.ctx||"").replace(/\bgram:[a-z0-9:]+/g,"").trim();var gm=GRAMRE.exec(x.ctx||"");$("dictGram").value=gm?gm[0]:"";$("dictPron").value=x.pron||"";$("dictReg").value=x.region||"";$("dictVar").value=x.variants||"";$("dictCue").value=x.cues||"";$("dictOther").value=x.others||"";
  $("edval").checked=!x.local;$("dictAdd").textContent="💾 Enregistrer la modification";$("edname").textContent="« "+x.word+" »";$("editbar").hidden=false;$("editbar").scrollIntoView({block:"center"})}
 async function saveEdit(){
  var id=EDIT,x=getRaw().filter(function(y){return y.id===id})[0];if(!x){resetForm();return}
- var f={word:$("dictWord").value.trim().replace(/\s+/g," "),meaning:$("dictMeaning").value.trim().replace(/\s+/g," "),lang:$("dictLang").value,target:$("dictTarget").value,example:$("dictExample").value.trim(),ctx:$("dictCtx").value.trim(),pron:$("dictPron").value.trim(),region:$("dictReg").value.trim(),variants:$("dictVar").value.trim(),cues:$("dictCue").value.trim(),others:$("dictOther").value.trim()};
+ var f={word:$("dictWord").value.trim().replace(/\s+/g," "),meaning:$("dictMeaning").value.trim().replace(/\s+/g," "),lang:$("dictLang").value,target:$("dictTarget").value,example:$("dictExample").value.trim(),ctx:ctxVal(),pron:$("dictPron").value.trim(),region:$("dictReg").value.trim(),variants:$("dictVar").value.trim(),cues:$("dictCue").value.trim(),others:$("dictOther").value.trim()};
  if(!nz(f.word)||!nz(f.meaning)){toast("Renseigne le mot et sa traduction");return}
  if(f.lang===f.target){toast("Choisis deux langues différentes");return}
  if(!x.local){
@@ -306,7 +308,7 @@ function renderDict(){
   var h=document.createElement("div"),b=document.createElement("b");b.textContent=x.word===PLH?"🎧 À transcrire":x.word;h.appendChild(b);
   h.appendChild(document.createTextNode(" → "+x.meaning));var s=document.createElement("span");s.className="st "+stKey(x.status);s.textContent=x.status;h.appendChild(s);d.appendChild(h);
   var m=document.createElement("div");m.className="note";
-  m.textContent=L(x.lang)[2]+" → "+L(x.target)[2]+[x.pron&&"prononciation : "+x.pron,x.region&&"région : "+x.region,x.ctx&&"contexte : "+x.ctx,x.cues&&"indices : "+x.cues,x.variants&&"variantes : "+x.variants,x.example&&"exemple : "+x.example,x.others&&"autres langues : "+x.others.replace(/\n/g," ; ")].filter(Boolean).map(function(t){return" · "+t}).join("");
+  m.textContent=L(x.lang)[2]+" → "+L(x.target)[2]+[x.pron&&"prononciation : "+x.pron,x.region&&"région : "+x.region,x.ctx&&gramLabel(x.ctx)&&"contexte : "+gramLabel(x.ctx),x.cues&&"indices : "+x.cues,x.variants&&"variantes : "+x.variants,x.example&&"exemple : "+x.example,x.others&&"autres langues : "+x.others.replace(/\n/g," ; ")].filter(Boolean).map(function(t){return" · "+t}).join("");
   d.appendChild(m);
   (x.fixes||[]).forEach(function(c){var p=document.createElement("div");p.className="fx";p.textContent="✎ Correction proposée : "+c.text;d.appendChild(p)});
   if(x.reports){var r=document.createElement("div");r.className="fx";r.textContent="⚑ Signalé "+x.reports+" fois";d.appendChild(r)}
@@ -473,7 +475,7 @@ function choose(c,ctx,pos){
  if(best&&!tie)return {d:best.d};
  return {d:u[0].d,amb:1,alts:u.slice(1).map(function(x){return x.d})}}
 // Formes conjuguées d'un verbe français du dictionnaire (« fuir » → fui, fuit, fuyons…) pour retrouver le mot nouchi depuis une phrase conjuguée
-function frForms(inf){inf=String(inf).trim().toLowerCase();if(wordsOf(inf).length!==1||NOCOMP[inf])return [];
+function frForms(inf){inf=String(inf).trim().toLowerCase();if(wordsOf(inf).length!==1)return [];if(NOCOMP[inf])return inf==="aller"?["allé"]:[];
  var o=[],i,f,ok=function(w){return w&&w.length>=3&&w!==inf&&!KEEP[w]&&!AUXA[w]&&!DETS[w]&&!DETP[w]&&!CLIT[w]&&!PRON.hasOwnProperty(w)};
  try{for(i=0;i<6;i++){f=conjPresent(inf,i);if(f)o.push(f)}
   var pp=pastPart(inf);if(pp)o.push(pp);
@@ -504,10 +506,15 @@ var FRP=["je","tu","il","nous","vous","ils"],AVO=["ai","as","a","avons","avez","
 var ETRE_V={aller:1,venir:1,partir:1,arriver:1,sortir:1,entrer:1,rentrer:1,rester:1,tomber:1,"naître":1,mourir:1,devenir:1,monter:1,descendre:1,retourner:1,revenir:1};
 // pour ajouter une langue : copier ce bloc avec ses pronoms (pron), ses marqueurs (mark) et leur forme de sortie (out, pl)
 var GRAMDEF={dyu:{pron:{n:0,i:1,a:2,an:3,aw:4,u:5},mark:{ye:"perf",be:"pres",bena:"fut",na:"fut",te:"negpres",ma:"negperf"},out:{perf:"ye",pres:"bɛ",fut:"bɛna",negpres:"tɛ",negperf:"ma"},pl:["n","i","a","an","aw","u"]}};
-GRAMDEF.bm=GRAMDEF.dyu;
-var GRAMC={};
-function gramOf(lg){var d=GRAMDEF[lg],g,k;if(!d)return null;if(GRAMC[lg])return GRAMC[lg];
- g={pron:{},mark:{},out:d.out,pl:d.pl};for(k in d.pron)g.pron[phon(k)]=d.pron[k];for(k in d.mark)g.mark[phon(k)]=d.mark[k];return GRAMC[lg]=g}
+GRAMDEF.bm=GRAMDEF.mlq=GRAMDEF.dyu;
+var GRAMMK=/\bgram:mark:/,GRAMRE=/\bgram:(?:pron:([0-5])|mark:(pres|perf|fut|negpres|negperf))(?![a-z0-9:])/;
+// règles de la langue = règles intégrées (dioula, bambara, malinké) + mots de grammaire VALIDÉS dans Équipédia (type « gram: » dans le contexte)
+function gramOf(lg){var d=GRAMDEF[lg],g={pron:{},mark:{},out:{},pl:[]},k,any=false;
+ if(d){for(k in d.pron)g.pron[phon(k)]=d.pron[k];for(k in d.mark)g.mark[phon(k)]=d.mark[k];for(k in d.out)g.out[k]=d.out[k];g.pl=d.pl.slice();any=true}
+ getDict().forEach(function(x){var m;if(x.lang!==lg||x.target!=="fr"||x.status!=="validé"||!x.ctx||x.word===PLH)return;m=GRAMRE.exec(x.ctx);if(!m)return;any=true;
+  if(m[1]!==undefined){g.pron[phon(x.word)]=+m[1];if(!g.pl[+m[1]])g.pl[+m[1]]=x.word}
+  else{g.mark[phon(x.word)]=m[2];if(!g.out[m[2]])g.out[m[2]]=x.word}});
+ return any?g:null}
 function frTense(kind,p,iv){var vf=conjPresent(iv,p)||iv,pp=pastPart(iv)||iv,aux=ETRE_V[iv]?ETR[p]:AVO[p];
  if(kind==="pres")return [vf];if(kind==="perf")return [aux,pp];if(kind==="fut")return [ALLER[p],iv];
  if(kind==="negpres")return ["ne",vf,"pas"];if(kind==="negperf")return ["ne",aux,"pas",pp];return [iv]}
@@ -538,18 +545,18 @@ function tenseRev(out,meta,G){var k,j,iv,w,pp,pf,kind,neg,sj,bl,mkr,n=0,AUXS={},
   else if(pf.indexOf(w)>=0&&w!==iv){kind="pres";if(raw(k+1,PS)){neg=true;bl.push(k+1)}}
   if(!kind)continue;
   if(raw(j,NE)){neg=true;bl.push(j);j--}
-  sj=-1;if(j>=0&&j<meta.length&&!meta[j].m&&PRON.hasOwnProperty(tkn(meta[j].s)))sj=j;else if(j>=0&&!meta[j].m&&/^\p{Lu}/u.test(meta[j].s))sj=-2;
+  sj=-1;if(j>=0&&j<meta.length&&PRON.hasOwnProperty(tkn(meta[j].s)))sj=j;else if(j>=0&&!meta[j].m&&/^\p{Lu}/u.test(meta[j].s))sj=-2;
   if(sj===-1||(neg&&kind==="fut"))continue;
   mkr=G.out[(neg?"neg":"")+kind];if(!mkr)continue;
   bl.forEach(function(b){out[b]=""});out[k]=mkr+" "+out[k];
-  if(sj>=0){var P=G.pl[PRON[tkn(meta[sj].s)]];out[sj]=/^\p{Lu}/u.test(meta[sj].s)?P.charAt(0).toUpperCase()+P.slice(1):P}
+  if(sj>=0&&!meta[sj].m){var P=G.pl[PRON[tkn(meta[sj].s)]];if(P)out[sj]=/^\p{Lu}/u.test(meta[sj].s)?P.charAt(0).toUpperCase()+P.slice(1):P}
   n++}
  return n}
 function dictSub(txt,f,t){
  var G=gramOf(t[1]);if(f[1]==="fr"&&G)txt=String(txt).replace(/(^|\s)([jJnN])['’](?=\p{L})/gu,"$1$2' ");
  var pairs={},stems={},rk={"validé":2,"en attente":1},maxn=1;
  function add(s,o){var k=kk(s,f[1]),sk=f[1]==="fr"?stemFr(s):null;(pairs[k]=pairs[k]||[]).push(o);if(sk){var o2={},q;for(q in o)o2[q]=o[q];o2.der=1;(stems[sk]=stems[sk]||[]).push(o2)}maxn=Math.max(maxn,nk(s).split(" ").length+(isLoc(f[1])?1:0))}
- getDict().forEach(function(x){if(x.status==="refusé"||x.word===PLH)return;var r=rk[x.status]||0;
+ getDict().forEach(function(x){if(x.status==="refusé"||x.word===PLH||GRAMMK.test(x.ctx||""))return;var r=rk[x.status]||0;
   if(x.lang===f[1]&&x.target===t[1])senses(x).forEach(function(z){add(x.word,{d:(t[1]==="fr"&&!/nom propre/i.test(x.ctx||""))?lcFirst(z.d):z.d,r:r,cues:cueList(z.cues+","+(x.cues||""))})});
   else if(x.target===f[1]&&x.lang===t[1])senses(x).forEach(function(z){add(z.d,{d:x.word,r:r,cues:[],iv:(f[1]==="fr"&&isInf(z.d))?z.d:null});if(f[1]==="fr"&&isInf(z.d))frForms(z.d).forEach(function(g){add(g,{d:x.word,r:r,cues:[],der:1,iv:z.d})})})});
  var tk=String(txt).trim().split(/\s+/),ctx=tk.map(function(w){return nk(w)}),out=[],meta=[],marks=[],hit=0,amb=[],i=0;
@@ -918,6 +925,8 @@ function instUI(){INFO=instInfo();$("instTxt").textContent=INFO.t;var bt=$("inst
  var x=0;try{x=+localStorage.getItem("tal_inst_x")||0}catch(e){}
  var show=!STANDALONE&&Date.now()-x>7*864e5;$("inst").hidden=!show;
  if(show){$("instMsg").textContent=INAPP?"Ouvre TAL dans Chrome ou Safari pour l’installer":"📲 Installe TAL sur ton écran d’accueil";$("instGo").textContent=INAPP?"Comment ?":"Installer"}}
+function ctxVal(){var t=$("dictGram").value,c=$("dictCtx").value.replace(/\s+/g," ").trim();return((t?t+" ":"")+c).trim()}
+function gramLabel(c){return String(c||"").replace(/\bgram:pron:([0-5])\b/g,function(m,p){return"pronom sujet « "+FRP[+p]+" »"}).replace(/\bgram:mark:(pres|perf|fut|negpres|negperf)\b/g,function(m,k){return"marqueur : "+({pres:"présent",perf:"passé (accompli)",fut:"futur",negpres:"négation du présent",negperf:"négation du passé"})[k]}).trim()}
 function hit(e){try{fetch("/api/hit",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({e:e}),keepalive:true}).catch(function(){})}catch(x){}}
 try{if(!sessionStorage.getItem("tal_hit")){sessionStorage.setItem("tal_hit","1");hit(STANDALONE?"app":"visit")}}catch(x){}
 window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();DEF=e;instUI()});
