@@ -106,7 +106,7 @@ if(seen){s.remove();return}try{sessionStorage.setItem("tal_splash","1")}catch(e)
 var t0=Date.now(),done=false;function hide(){if(done)return;done=true;s.classList.add("off");setTimeout(function(){s.remove()},600)}
 function go(){setTimeout(hide,Math.max(0,1800-(Date.now()-t0)))}
 if(document.readyState==="complete")go();else window.addEventListener("load",go);setTimeout(hide,3800);s.onclick=hide})();</script>
-<div id="brand"><i role="img" aria-label="Logo de TAL"></i><b>TAL</b><span>Traduction Africaine des Langues</span><small id="ver" style="margin-left:auto;color:var(--mut);font-size:.65rem">v34</small></div>
+<div id="brand"><i role="img" aria-label="Logo de TAL"></i><b>TAL</b><span>Traduction Africaine des Langues</span><small id="ver" style="margin-left:auto;color:var(--mut);font-size:.65rem">v35</small></div>
 <div id="inst" hidden><span id="instMsg"></span><button id="instGo" type="button">Installer</button><button id="instX" type="button" aria-label="Fermer">✕</button></div>
 <nav role="tablist" aria-label="Rubriques">
  <button role="tab" id="tb-c" data-v="vc" aria-selected="true">🎙️ Causerie</button>
@@ -174,6 +174,18 @@ if(document.readyState==="complete")go();else window.addEventListener("load",go)
  </div>
  <button class="btn" id="dictAdd">Ajouter</button>
  <p class="note">Chaque contribution reste « en attente » jusqu’à validation par une personne compétente. Ta définition n’est jamais modifiée sans ton accord.</p>
+ <details id="bulk" style="margin-top:12px"><summary style="cursor:pointer;font-weight:700">⚡ Ajouter beaucoup de mots d’un coup</summary>
+  <div class="grid" style="margin-top:10px"><select id="bkLang" class="full" aria-label="Langue des mots à ajouter"></select></div>
+  <p class="note"><b>1. Liste de base à compléter</b> : TAL te montre un mot français après l’autre. Écris-le (ou dis-le avec 🎤) dans ta langue, puis « Enregistrer et suivant ». Les mots déjà présents sont sautés.</p>
+  <div id="qfWord" style="font-size:1.5rem;font-weight:800;margin:6px 0"></div>
+  <div class="row" style="gap:8px"><input id="qfIn" placeholder="Ce mot dans ta langue" aria-label="Mot dans ta langue" autocomplete="off"><button class="ic" type="button" data-mic="qfIn" aria-label="Dire à voix haute">🎤</button></div>
+  <div class="row" style="gap:8px;margin-top:8px"><button class="btn" id="qfSave" type="button">Enregistrer et suivant</button><button class="btn" id="qfSkip" type="button" style="background:transparent;color:var(--ink);border:1px solid var(--line)">Passer</button></div>
+  <p class="note" id="qfProg"></p>
+  <p class="note"><b>2. Coller une liste</b> : une ligne par mot, sous la forme <i>mot = traduction française</i> (ou avec « ; »). Exemple : baara = travail</p>
+  <textarea id="bkText" class="full" rows="5" placeholder="baara = travail&#10;so = maison&#10;ji = eau" aria-label="Liste de mots"></textarea>
+  <button class="btn" id="bkGo" type="button">Ajouter toute la liste</button>
+  <p class="note">Tous les mots ajoutés restent « en attente » jusqu’à validation par une personne compétente.</p>
+ </details>
  <hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
  <div class="grid"><input id="dictQ" placeholder="🔎 Rechercher un mot…" aria-label="Rechercher"><select id="dictF" aria-label="Filtrer par statut"><option value="">Tous les statuts</option><option>en attente</option><option>validé</option><option>à corriger</option><option>refusé</option><option>supprimé</option><option>🎧 à transcrire</option><option>🔊 avec voix</option></select></div>
  <label class="au"><input type="checkbox" id="vmode"> Mode modérateur (clé secrète, en ligne)</label>
@@ -349,7 +361,7 @@ function fill(sel,val){sel.innerHTML="";function add(p,l){var o=document.createE
  GROUPS.forEach(function(g){var og=document.createElement("optgroup");og.label=g[0];g[1].forEach(function(l){add(og,l)});sel.appendChild(og)});
  var oc=document.createElement("optgroup"),n=0;oc.label="Langues ajoutées";CUSTOM.forEach(function(c){if(!BASE.some(function(b){return b[1]===c.code})){add(oc,[c.code,c.code,c.name,""]);n++}});if(n)sel.appendChild(oc);
  sel.value=val}
-function refreshSel(){fill($("la"),A);fill($("lb"),B);fill($("dictLang"),$("dictLang").getAttribute("data-v")||"nouchi");fill($("dictTarget"),$("dictTarget").getAttribute("data-v")||"fr");fill($("vcLang"),$("vcLang").getAttribute("data-v")||"nouchi");lab()}
+function refreshSel(){fill($("la"),A);fill($("lb"),B);fill($("dictLang"),$("dictLang").getAttribute("data-v")||"nouchi");fill($("dictTarget"),$("dictTarget").getAttribute("data-v")||"fr");fill($("vcLang"),$("vcLang").getAttribute("data-v")||"nouchi");fill($("bkLang"),$("bkLang").getAttribute("data-v")||"bci");lab()}
 function lab(){$("na").textContent=L(A)[2].split(" (")[0];$("nb").textContent=L(B)[2].split(" (")[0];$("sa").setAttribute("aria-label",L(A)[2]+" → "+L(B)[2]);$("tx").placeholder="Écrire en "+L(A)[2].split(" (")[0]+" ➤ "+L(B)[2].split(" (")[0];$("sb").setAttribute("aria-label","Traduire dans l’autre sens : "+L(B)[2]+" → "+L(A)[2]);$("sb").title=L(B)[2].split(" (")[0]+" → "+L(A)[2].split(" (")[0];sv("lt2",[A,B])}
 $("la").onchange=function(){A=this.value;lab()};$("lb").onchange=function(){B=this.value;lab()};
 $("sw").onclick=function(){var t=A;A=B;B=t;$("la").value=A;$("lb").value=B;lab()};
@@ -372,15 +384,15 @@ function saveDict(x){return sv(DK,x)}
 function stKey(s){return s.replace(" ","-")}
 function addEntry(e){
  var w=nz(e.word),m=nz(e.meaning);
- if(!w||!m){toast("Renseigne le mot et sa traduction");return false}
- if(e.lang===e.target){toast("Choisis deux langues différentes");return false}
+ if(!w||!m){if(!e.quiet)toast("Renseigne le mot et sa traduction");return false}
+ if(e.lang===e.target){if(!e.quiet)toast("Choisis deux langues différentes");return false}
  var items=getDict(),dup=items.filter(function(x){return kk(x.word,x.lang)===kk(w,e.lang)&&x.lang===e.lang&&x.target===e.target&&nk(x.meaning)===nk(m)&&x.status!=="refusé"});
- if(dup.length){toast("Ce mot avec ce sens existe déjà");return false}
+ if(dup.length){if(!e.quiet)toast("Ce mot avec ce sens existe déjà");return false}
  var other=items.some(function(x){return kk(x.word,x.lang)===kk(w,e.lang)&&x.lang===e.lang&&x.target===e.target});
  var now=new Date().toISOString();
  items.push({id:"e"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),word:e.word.trim().replace(/\s+/g," "),lang:e.lang,meaning:e.meaning.trim().replace(/\s+/g," "),target:e.target,example:e.example||"",cues:e.cues||"",ctx:e.ctx||"",pron:e.pron||"",region:e.region||"",variants:e.variants||"",others:e.others||"",status:"en attente",createdAt:now,updatedAt:now,fixes:[],reports:0,local:true});
  if(!saveDict(items))return false;
- toast(other?"Enregistré (autre sens du même mot)":"✔ Enregistré dans Équipédia");syncNow();return true}
+ if(!e.quiet){toast(other?"Enregistré (autre sens du même mot)":"✔ Enregistré dans Équipédia");syncNow()}return true}
 $("dictAdd").onclick=function(){
  if(EDIT){saveEdit();return}
  var ok=addEntry({word:$("dictWord").value,meaning:$("dictMeaning").value,lang:$("dictLang").value,target:$("dictTarget").value,example:$("dictExample").value.trim(),ctx:ctxVal(),cues:$("dictCue").value.trim(),pron:$("dictPron").value.trim(),region:$("dictReg").value.trim(),variants:$("dictVar").value.trim(),others:$("dictOther").value.trim()});
@@ -1032,6 +1044,21 @@ function instUI(){INFO=instInfo();$("instTxt").textContent=INFO.t;var bt=$("inst
  var x=0;try{x=+localStorage.getItem("tal_inst_x")||0}catch(e){}
  var show=!STANDALONE&&Date.now()-x>7*864e5;$("inst").hidden=!show;
  if(show){$("instMsg").textContent=INAPP?"Ouvre TAL dans Chrome ou Safari pour l’installer":"📲 Installe TAL sur ton écran d’accueil";$("instGo").textContent=INAPP?"Comment ?":"Installer"}}
+// ---------- Remplissage rapide et import en bloc ----------
+var QFW=["bonjour","bonsoir","bonne nuit","au revoir","merci","s’il te plaît","pardon","bienvenue","oui","non","ça va","comment t’appelles-tu ?","je m’appelle","à demain","je","tu","il","elle","nous","vous","ils","moi","toi","zéro","un","deux","trois","quatre","cinq","six","sept","huit","neuf","dix","vingt","trente","cent","mille","famille","père","mère","enfant","fils","fille","frère","sœur","grand-père","grand-mère","oncle","tante","mari","femme","homme","garçon","bébé","ami","voisin","personne","chef","étranger","enseignant","élève","médecin","cultivateur","commerçant","tête","œil","oreille","nez","bouche","dent","langue","main","bras","pied","jambe","ventre","dos","cœur","sang","cheveux","peau","os","eau","feu","terre","soleil","lune","étoile","ciel","pluie","vent","nuit","jour","arbre","feuille","rivière","montagne","forêt","route","pierre","sable","chien","chat","poule","mouton","chèvre","vache","cheval","oiseau","poisson","serpent","singe","éléphant","lion","souris","mouche","moustique","nourriture","riz","igname","banane plantain","manioc","maïs","huile","sel","sucre","viande","lait","œuf","pain","fruit","mangue","orange","tomate","oignon","piment","arachide","café","cacao","attiéké","maison","porte","fenêtre","lit","table","chaise","marmite","couteau","panier","vêtement","chaussure","argent","voiture","moto","téléphone","livre","école","marché","village","ville","église","mosquée","hôpital","champ","être","avoir","aller","venir","manger","boire","dormir","voir","entendre","parler","dire","faire","donner","prendre","acheter","vendre","travailler","marcher","courir","s’asseoir","se lever","entrer","sortir","savoir","vouloir","pouvoir","aimer","apprendre","lire","écrire","chanter","danser","jouer","rire","pleurer","mourir","chercher","trouver","ouvrir","fermer","laver","cuisiner","attendre","rester","partir","arriver","appeler","demander","répondre","comprendre","penser","aider","payer","porter","tomber","fuir","grand","petit","bon","mauvais","beau","nouveau","vieux","chaud","froid","long","court","lourd","léger","plein","vide","rouge","blanc","noir","jeune","fort","faible","heureux","triste","malade","riche","pauvre","vrai","faux","aujourd’hui","demain","hier","maintenant","toujours","jamais","matin","soir","ici","là","dehors","dedans","devant","derrière","avec","sans","et","ou","mais","parce que","beaucoup","un peu","tout","rien","très","qui","quoi","où","quand","pourquoi","comment","combien","j’ai faim","j’ai soif","je suis fatigué","je ne comprends pas","aide-moi","c’est combien ?","je t’aime","je ne sais pas","travail"],QFL=[],QFI=0;
+function qfReset(){var lg=$("bkLang").value,have={};getDict().forEach(function(x){if(x.lang===lg&&x.target==="fr"&&x.status!=="refusé"&&x.status!=="supprimé")have[nk(x.meaning)]=1});QFL=QFW.filter(function(w){return !have[nk(w)]});QFI=0;qfShow()}
+function qfShow(){var w=QFL[QFI];$("qfIn").value="";if(w){$("qfWord").textContent=w;$("qfProg").textContent="Mot "+(QFI+1)+" sur "+QFL.length+" · "+(QFW.length-QFL.length)+" déjà dans Équipédia"}else{$("qfWord").textContent="🎉 Liste terminée";$("qfProg").textContent=QFL.length?"Tu as passé les mots restants.":"Tous les mots de la liste sont déjà dans Équipédia."}}
+$("bkLang").onchange=function(){this.setAttribute("data-v",this.value);qfReset()};
+$("qfSave").onclick=function(){var w=QFL[QFI],v=$("qfIn").value,lg=$("bkLang").value;if(!w)return;if(lg==="fr"){toast("Choisis une langue autre que le français");return}
+ if(!nz(v)){toast("Écris le mot dans ta langue, ou touche « Passer »");return}if(addEntry({word:v,meaning:w,lang:lg,target:"fr"}))QFI++;qfShow()};
+$("qfSkip").onclick=function(){if(QFL[QFI]){QFI++;qfShow()}};
+$("qfIn").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();$("qfSave").click()}});
+$("bkGo").onclick=function(){var lg=$("bkLang").value,ok=0,bad=0,dup=0;if(lg==="fr"){toast("Choisis une langue autre que le français");return}
+ $("bkText").value.split("\n").slice(0,500).forEach(function(l){l=l.trim();if(!l)return;var m=/^(.+?)\s*(?:=|;|\t|→|\|)\s*(.+)$/.exec(l);if(!m){bad++;return}
+  if(addEntry({word:m[1],meaning:m[2],lang:lg,target:"fr",quiet:true}))ok++;else dup++});
+ if(ok){syncNow();$("bkText").value=""}
+ toast("✔ "+ok+" mot"+(ok>1?"s":"")+" ajouté"+(ok>1?"s":"")+(dup?" · "+dup+" déjà présent(s)":"")+(bad?" · "+bad+" ligne(s) illisible(s)":""));qfReset()};
+$("bulk").addEventListener("toggle",function(){if(this.open)qfReset()});
 function ctxVal(){var t=$("dictGram").value,c=$("dictCtx").value.replace(/\s+/g," ").trim();return((t?t+" ":"")+c).trim()}
 function gramLabel(c){return String(c||"").replace(/\bgram:pron:([0-5])\b/g,function(m,p){return"pronom sujet « "+FRP[+p]+" »"}).replace(/\bgram:mark:(pres|perf|fut|negpres|negperf)\b/g,function(m,k){return"marqueur : "+({pres:"présent",perf:"passé (accompli)",fut:"futur",negpres:"négation du présent",negperf:"négation du passé"})[k]}).trim()}
 function hit(e){try{fetch("/api/hit",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({e:e}),keepalive:true}).catch(function(){})}catch(x){}}

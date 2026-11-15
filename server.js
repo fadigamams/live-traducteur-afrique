@@ -180,5 +180,14 @@ app.use((e, q, s, n) => { // jamais de trace d'erreur envoyée au visiteur
   console.error(e); s.status(500).json({ error: "Erreur serveur" });
 });
 const port = process.env.PORT || 3000;
-pool.query(INIT).then(() => app.listen(port, () => console.log("TAL sur le port " + port)))
+const SEED_NOTE = "proposé par l’assistant IA : à valider par un locuteur";
+async function seed() { // dictionnaire de départ (dioula) : entrées « en attente », jamais écrasées ni recréées si supprimées
+  if (process.env.NO_SEED) return;
+  try {
+    const L = JSON.parse(fs.readFileSync(path.join(__dirname, "pages", "seed-dyu.json"), "utf8"));
+    await pool.query("insert into entries(id,word,lang,meaning,target,ctx) select t.i,t.w,'dyu',t.m,'fr',$4::text from unnest($1::text[],$2::text[],$3::text[]) as t(i,w,m) on conflict(id) do nothing",
+      [L.map((x, i) => "seed-dyu-" + String(i + 1).padStart(4, "0")), L.map(x => x[0]), L.map(x => x[1]), SEED_NOTE]);
+  } catch (e) { console.error("Amorçage du dictionnaire ignoré :", e.message); }
+}
+pool.query(INIT).then(() => seed()).then(() => app.listen(port, () => console.log("TAL sur le port " + port)))
   .catch(e => { console.error("Base de données inaccessible :", e.message); process.exit(1); });
