@@ -110,7 +110,7 @@ function go(){setTimeout(hide,Math.max(0,1800-(Date.now()-t0)))}
 if(document.readyState==="complete")go();else window.addEventListener("load",go);setTimeout(hide,3800);s.onclick=hide})();</script>
 <h1 class="sr">TAL – Traducteur nouchi, dioula, baoulé et langues africaines vers le français</h1>
 <noscript><p style="padding:12px">TAL traduit le nouchi, le dioula et le baoulé vers le français. Active JavaScript pour utiliser l’application.</p></noscript>
-<div id="brand"><i role="img" aria-label="Logo de TAL"></i><b>TAL</b><span>Traduction Africaine des Langues</span><small id="ver" style="margin-left:auto;color:var(--mut);font-size:.65rem">v39</small></div>
+<div id="brand"><i role="img" aria-label="Logo de TAL"></i><b>TAL</b><span>Traduction Africaine des Langues</span><small id="ver" style="margin-left:auto;color:var(--mut);font-size:.65rem">v40</small></div>
 <div id="inst" hidden><span id="instMsg"></span><button id="instGo" type="button">Installer</button><button id="instX" type="button" aria-label="Fermer">✕</button></div>
 <nav role="tablist" aria-label="Rubriques">
  <button role="tab" id="tb-c" data-v="vc" aria-selected="true">🎙️ Causerie</button>
@@ -480,6 +480,8 @@ function accordFr(res){var lw=function(z){var a=String(z).toLowerCase().split(" 
  for(var i=0;i<res.length;i++){var k=fw(res[i]);if(!ADJF[k]||String(res[i]).split(" ").length>1)continue;
   var fem=(i+1<res.length&&NOMFSET[fw(res[i+1])])||(i>0&&NOMFSET[lw(res[i-1])]);
   if(fem){var f=ADJF[k],r=String(res[i]);res[i]=(r[0]!==r[0].toLowerCase()?f[0].toUpperCase()+f.slice(1):f)}}}
+function noAcc(z){return String(z).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase()}
+var ADJINV={};Object.keys(ADJF).forEach(function(m){ADJINV[noAcc(ADJF[m])]=m});
 function wforms(w){return String(w).split(";").map(function(z){return z.trim()}).filter(Boolean)}
 function w1(w){return wforms(w)[0]||String(w)}
 function senses(x){return /[(\[;]/.test(x.meaning)?splitSenses(x.meaning):[{d:x.meaning,cues:""}]}
@@ -580,7 +582,7 @@ function conjFix(out,ix){
   if(DETS[dt])return done(conjPresent(inf,2));if(DETP[dt])return done(conjPresent(inf,5))}
  return done()}
 
-function dictFind(txt,f,t){var k=kk(txt,f[1]),hits=[],rk={"validé":2,"en attente":1};
+function dictFind(txt,f,t){if(f[1]==="fr"&&ADJINV[noAcc(String(txt).trim())])txt=ADJINV[noAcc(String(txt).trim())];var k=kk(txt,f[1]),hits=[],rk={"validé":2,"en attente":1};
  function scan(){getDict().forEach(function(x){if(x.status==="refusé"||x.word===PLH)return;var r=rk[x.status]||0;
   var m=function(s){return kk(s,f[1])===k};
   if(x.lang===f[1]&&x.target===t[1]&&wforms(x.word).some(m))senses(x).forEach(function(z){hits.push({text:z.d,r:r})});
@@ -696,7 +698,8 @@ function dictSub(txt,f,t){
  tk.forEach(function(w,ix){if(ix>0&&/^\p{Lu}\p{L}+$/u.test(w))ctx[ix]="personne"});
  function look(i){var n,key,p,loc=isLoc(f[1]);
   for(n=Math.min(maxn,tk.length-i);n>=1;n--){key=kk(tk.slice(i,i+n).join(" "),f[1]);p=pairs[key];if(p)return {c:p,n:n}}
-  if(f[1]==="fr"&&!KEEP[tkn(tk[i])]){var sk=stemFr(tk[i]);if(sk&&stems[sk])return {c:stems[sk],n:1}}
+  if(f[1]==="fr"){var am=ADJINV[noAcc(tk[i])];if(am&&pairs[kk(am,f[1])])return {c:pairs[kk(am,f[1])],n:1}}
+   if(f[1]==="fr"&&!KEEP[tkn(tk[i])]){var sk=stemFr(tk[i]);if(sk&&stems[sk])return {c:stems[sk],n:1}}
   return null}
  while(i<tk.length){var lk=look(i),cands=lk?lk.c:null,n=lk?lk.n:0;
   if(cands){var pk=choose(cands,ctx,i+n-1),cc=null;if(t[1]==="fr")pk=gramFix(pk,cands,out);cands.forEach(function(c){if(!cc&&c.d===pk.d)cc=c});if(pk.amb)amb.push("« "+tk.slice(i,i+n).join(" ")+" » = "+pk.d+" (autre sens : "+pk.alts.join(", ")+")");out.push(pk.d);meta.push({m:1,inf:t[1]==="fr"&&isInf(pk.d),iv:cc&&cc.iv||null,s:tk.slice(i,i+n).join(" ")});if(t[1]==="fr"&&isInf(pk.d))marks.push(out.length-1);hit++;i+=n}else{out.push(tk[i]);meta.push({m:0,s:tk[i]});i++}}
