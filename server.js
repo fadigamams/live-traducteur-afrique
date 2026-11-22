@@ -24,6 +24,11 @@ app.use((q, s, n) => { s.set({ "X-Content-Type-Options": "nosniff", "Referrer-Po
   "Strict-Transport-Security": "max-age=31536000; includeSubDomains", "Permissions-Policy": "microphone=(self), camera=(), geolocation=(), payment=()", "Cross-Origin-Opener-Policy": "same-origin" }); n(); });
 app.use("/api", (q, s, n) => { s.set("Cache-Control", "no-store"); n(); });
 app.get(["/legal", "/confidentialite", "/mentions-legales", "/conditions"], (q, s) => { s.set({ "Content-Security-Policy": PAGE_CSP, "Cache-Control": "no-cache" }); s.type("html").send(LEGAL); });
+const SITE = "https://live-traducteur-afrique.onrender.com";
+const hasPub = f => fs.existsSync(path.join(__dirname, "public", f));
+if (!hasPub("robots.txt")) app.get("/robots.txt", (q, s) => s.type("text/plain").set("Cache-Control", "public, max-age=86400").send("User-agent: *\nAllow: /\nDisallow: /api/\nSitemap: " + SITE + "/sitemap.xml\n"));
+if (!hasPub("sitemap.xml")) app.get("/sitemap.xml", (q, s) => s.type("application/xml").set("Cache-Control", "public, max-age=86400").send('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>' + SITE + '/</loc></url><url><loc>' + SITE + '/legal</loc></url></urlset>'));
+app.get("/healthz", (q, s) => s.type("text/plain").send("ok"));
 app.get("/favicon.ico", (q, s) => { s.set("Cache-Control", "public, max-age=604800"); s.type("png").sendFile(path.join(__dirname, "public", "icon-192.png")); });
 app.get(["/", "/index.html"], (q, s) => { // page servie avec un nonce CSP : seul le script de l'appli peut s'exécuter
   const nonce = crypto.randomBytes(16).toString("base64");
