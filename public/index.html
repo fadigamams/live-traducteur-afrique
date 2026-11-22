@@ -110,7 +110,7 @@ function go(){setTimeout(hide,Math.max(0,1800-(Date.now()-t0)))}
 if(document.readyState==="complete")go();else window.addEventListener("load",go);setTimeout(hide,3800);s.onclick=hide})();</script>
 <h1 class="sr">TAL – Traducteur nouchi, dioula, baoulé et langues africaines vers le français</h1>
 <noscript><p style="padding:12px">TAL traduit le nouchi, le dioula et le baoulé vers le français. Active JavaScript pour utiliser l’application.</p></noscript>
-<div id="brand"><i role="img" aria-label="Logo de TAL"></i><b>TAL</b><span>Traduction Africaine des Langues</span><small id="ver" style="margin-left:auto;color:var(--mut);font-size:.65rem">v37</small></div>
+<div id="brand"><i role="img" aria-label="Logo de TAL"></i><b>TAL</b><span>Traduction Africaine des Langues</span><small id="ver" style="margin-left:auto;color:var(--mut);font-size:.65rem">v38</small></div>
 <div id="inst" hidden><span id="instMsg"></span><button id="instGo" type="button">Installer</button><button id="instX" type="button" aria-label="Fermer">✕</button></div>
 <nav role="tablist" aria-label="Rubriques">
  <button role="tab" id="tb-c" data-v="vc" aria-selected="true">🎙️ Causerie</button>
@@ -472,7 +472,9 @@ function splitSenses(m){var out=[],cur="",dp=0,s=String(m);
   cur+=c}
  out.push(cur);
  return out.map(function(z){var mm=z.match(/^(.*?)\s*[(\[]([^)\]]*)[)\]]\s*$/);return mm?{d:mm[1].trim(),cues:mm[2]}:{d:z.trim(),cues:""}}).filter(function(z){return z.d})}
-function senses(x){return /[(\[]/.test(x.meaning)?splitSenses(x.meaning):[{d:x.meaning,cues:""}]}
+function wforms(w){return String(w).split(";").map(function(z){return z.trim()}).filter(Boolean)}
+function w1(w){return wforms(w)[0]||String(w)}
+function senses(x){return /[(\[;]/.test(x.meaning)?splitSenses(x.meaning):[{d:x.meaning,cues:""}]}
 function isLoc(code){return L(code)[3].indexOf("s")<0}
 // Clé phonétique (orthographe à la française) : « dohi », « doï », « dohy », « dauhi » donnent la même clé
 function phon(s){return nk(s).replace(/ɔ/g,"o").replace(/[ɛə]/g,"e").replace(/ɲ/g,"N").replace(/ŋ/g,"n").replace(/ɓ/g,"b").replace(/ɗ/g,"d").replace(/ʋ/g,"v").split(" ").map(function(w){
@@ -573,8 +575,8 @@ function conjFix(out,ix){
 function dictFind(txt,f,t){var k=kk(txt,f[1]),hits=[],rk={"validé":2,"en attente":1};
  function scan(){getDict().forEach(function(x){if(x.status==="refusé"||x.word===PLH)return;var r=rk[x.status]||0;
   var m=function(s){return kk(s,f[1])===k};
-  if(x.lang===f[1]&&x.target===t[1]&&m(x.word))senses(x).forEach(function(z){hits.push({text:z.d,r:r})});
-  else if(x.target===f[1]&&x.lang===t[1]&&senses(x).some(function(z){return m(z.d)}))hits.push({text:x.word,r:r})})}
+  if(x.lang===f[1]&&x.target===t[1]&&wforms(x.word).some(m))senses(x).forEach(function(z){hits.push({text:z.d,r:r})});
+  else if(x.target===f[1]&&x.lang===t[1]&&senses(x).some(function(z){return m(z.d)}))hits.push({text:w1(x.word),r:r})})}
  scan();
  if(!hits.length)return null;var mr=Math.max.apply(null,hits.map(function(x){return x.r})),tx=[];
  hits.forEach(function(x){if(x.r===mr&&tx.indexOf(x.text)<0)tx.push(x.text)});
@@ -680,8 +682,8 @@ function dictSub(txt,f,t){
  var pairs={},stems={},rk={"validé":2,"en attente":1},maxn=1;
  function add(s,o){var k=kk(s,f[1]),sk=f[1]==="fr"?stemFr(s):null;(pairs[k]=pairs[k]||[]).push(o);if(sk){var o2={},q;for(q in o)o2[q]=o[q];o2.der=1;(stems[sk]=stems[sk]||[]).push(o2)}maxn=Math.max(maxn,nk(s).split(" ").length+(isLoc(f[1])?1:0))}
  getDict().forEach(function(x){if(x.status==="refusé"||x.word===PLH||GRAMMK.test(x.ctx||""))return;var r=rk[x.status]||0;
-  if(x.lang===f[1]&&x.target===t[1])senses(x).forEach(function(z){add(x.word,{d:(t[1]==="fr"&&!/nom propre/i.test(x.ctx||""))?lcFirst(z.d):z.d,r:r,cues:cueList(z.cues+","+(x.cues||""))})});
-  else if(x.target===f[1]&&x.lang===t[1])senses(x).forEach(function(z){add(z.d,{d:x.word,r:r,cues:[],iv:(f[1]==="fr"&&isInf(z.d))?z.d:null});if(f[1]==="fr"&&isInf(z.d))frForms(z.d).forEach(function(g){add(g,{d:x.word,r:r,cues:[],der:1,iv:z.d})})})});
+  if(x.lang===f[1]&&x.target===t[1])senses(x).forEach(function(z){wforms(x.word).forEach(function(wf){add(wf,{d:(t[1]==="fr"&&!/nom propre/i.test(x.ctx||""))?lcFirst(z.d):z.d,r:r,cues:cueList(z.cues+","+(x.cues||""))})})});
+  else if(x.target===f[1]&&x.lang===t[1])senses(x).forEach(function(z){add(z.d,{d:w1(x.word),r:r,cues:[],iv:(f[1]==="fr"&&isInf(z.d))?z.d:null});if(f[1]==="fr"&&isInf(z.d))frForms(z.d).forEach(function(g){add(g,{d:w1(x.word),r:r,cues:[],der:1,iv:z.d})})})});
  var tk=String(txt).trim().split(/\s+/),ctx=tk.map(function(w){return nk(w)}),out=[],meta=[],marks=[],hit=0,amb=[],i=0;
  tk.forEach(function(w,ix){if(ix>0&&/^\p{Lu}\p{L}+$/u.test(w))ctx[ix]="personne"});
  function look(i){var n,key,p,loc=isLoc(f[1]);
