@@ -110,7 +110,7 @@ function go(){setTimeout(hide,Math.max(0,1800-(Date.now()-t0)))}
 if(document.readyState==="complete")go();else window.addEventListener("load",go);setTimeout(hide,3800);s.onclick=hide})();</script>
 <h1 class="sr">TAL – Traducteur nouchi, dioula, baoulé et langues africaines vers le français</h1>
 <noscript><p style="padding:12px">TAL traduit le nouchi, le dioula et le baoulé vers le français. Active JavaScript pour utiliser l’application.</p></noscript>
-<div id="brand"><i role="img" aria-label="Logo de TAL"></i><b>TAL</b><span>Traduction Africaine des Langues</span><small id="ver" style="margin-left:auto;color:var(--mut);font-size:.65rem">v36</small></div>
+<div id="brand"><i role="img" aria-label="Logo de TAL"></i><b>TAL</b><span>Traduction Africaine des Langues</span><small id="ver" style="margin-left:auto;color:var(--mut);font-size:.65rem">v37</small></div>
 <div id="inst" hidden><span id="instMsg"></span><button id="instGo" type="button">Installer</button><button id="instX" type="button" aria-label="Fermer">✕</button></div>
 <nav role="tablist" aria-label="Rubriques">
  <button role="tab" id="tb-c" data-v="vc" aria-selected="true">🎙️ Causerie</button>
@@ -122,7 +122,7 @@ if(document.readyState==="complete")go();else window.addEventListener("load",go)
 <!-- A. CAUSERIE -->
 <section class="view on" id="vc">
 <header><select id="la" aria-label="Ma langue"></select><button class="ic" id="sw" aria-label="Inverser les langues">⇄</button><select id="lb" aria-label="Langue de l’interlocuteur"></select></header>
-<div id="chat"><div class="empty" id="em">Appuie sur <b>🎙️</b> pour une conversation en direct, ou sur <b>🎤 Moi</b> / <b>🎤 Lui-Elle</b> pour une phrase à la fois. Tu peux aussi écrire en bas.</div></div>
+<div id="chat"><div class="empty" id="em">Appuie sur <b>🎙️</b> pour une conversation à deux en direct : tu parles, TAL traduit à voix haute, puis écoute la réponse de l’autre personne dans sa langue. Ou appuie sur <b>🎤 Moi</b> / <b>🎤 Lui-Elle</b> pour une phrase à la fois. Tu peux aussi écrire en bas.</div></div>
 <footer class="dock">
 <div id="vstat" class="vs">Appuie sur 🎙️ pour parler : traduction en direct</div>
 <div id="cbar" hidden><b id="cb"></b> <button class="btn2" id="cf" style="margin:0 0 0 6px">⇄ Changer de sens</button></div>
@@ -861,7 +861,7 @@ function listen(side){var l=L(side=="a"?A:B);
  try{r.start()}catch(e){cur=null;btn.classList.remove("rec");el.remove()}}
 var cont=false,dir="a",crec=null,cel=null,holding=false,lt=0,busyL=false;
 function cl(){return L(dir=="a"?A:B)}function ct(){return L(dir=="a"?B:A)}
-function banner(){$("cb").textContent="🎧 "+cl()[2]+" → "+ct()[2]}
+function banner(){var n=function(l){return l[2].split(" (")[0]};$("cb").textContent="🗣️ À toi de parler en "+n(cl())+" → je dis en "+n(ct())+($("alt").checked?" · puis l’autre répond":"")}
 function vs(t){$("vstat").textContent=t}
 function resume(){if(cont&&holding){holding=false;vs("🎙️ Je t’écoute… parle en "+cl()[2].split(" (")[0]);run()}}
 function cstop(){cont=false;holding=false;$("mc").classList.remove("rec");$("cbar").hidden=true;vs("Appuie sur 🎙️ pour parler : traduction en direct");try{if(crec)crec.stop()}catch(e){}if(cel){cel.remove();cel=null}}
@@ -1026,7 +1026,7 @@ async function listenLocal(side){
   rk.slice(1,3).forEach(function(o){var b=document.createElement("button");b.type="button";b.className="btn2";b.textContent=o.x.word;b.onclick=function(){go(side,o.x.word,bubble(side))};alt.appendChild(b)});el.appendChild(alt)}
  else wordChoice(side,el,rk.slice(0,3),l)}
 
-refreshSel();renderDict();renderLangs();status();$("vmode").checked=!!ADMIN;$("gr").checked=ld("lt_gr",true);$("gr").onchange=function(){sv("lt_gr",this.checked)};$("vt").onclick=function(){var n=0,lc=0;try{speechSynthesis.getVoices().forEach(function(x){if(x.lang.toLowerCase().indexOf("fr")===0){n++;if(x.localService)lc++}})}catch(e){}toast(n?"Voix françaises : "+n+" ("+lc+" hors ligne). Écoute…":"Aucune voix française trouvée : installe-la dans Réglages > Synthèse vocale");speak("Bonjour, ceci est un test de la voix.",L("fr"))};try{initShare()}catch(e){}syncNow();setInterval(syncNow,90000);window.addEventListener("online",syncNow);
+$("alt").checked=ld("lt_alt",true);$("alt").onchange=function(){sv("lt_alt",this.checked)};refreshSel();renderDict();renderLangs();status();$("vmode").checked=!!ADMIN;$("gr").checked=ld("lt_gr",true);$("gr").onchange=function(){sv("lt_gr",this.checked)};$("vt").onclick=function(){var n=0,lc=0;try{speechSynthesis.getVoices().forEach(function(x){if(x.lang.toLowerCase().indexOf("fr")===0){n++;if(x.localService)lc++}})}catch(e){}toast(n?"Voix françaises : "+n+" ("+lc+" hors ligne). Écoute…":"Aucune voix française trouvée : installe-la dans Réglages > Synthèse vocale");speak("Bonjour, ceci est un test de la voix.",L("fr"))};try{initShare()}catch(e){}syncNow();setInterval(syncNow,90000);window.addEventListener("online",syncNow);
 if(window.speechSynthesis)speechSynthesis.getVoices();
 
 // ---------- Installation sur l'écran d'accueil (téléphone, iPhone, ordinateur) ----------
