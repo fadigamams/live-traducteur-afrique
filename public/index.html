@@ -110,7 +110,7 @@ function go(){setTimeout(hide,Math.max(0,1800-(Date.now()-t0)))}
 if(document.readyState==="complete")go();else window.addEventListener("load",go);setTimeout(hide,3800);s.onclick=hide})();</script>
 <h1 class="sr">TAL – Traducteur nouchi, dioula, baoulé et langues africaines vers le français</h1>
 <noscript><p style="padding:12px">TAL traduit le nouchi, le dioula et le baoulé vers le français. Active JavaScript pour utiliser l’application.</p></noscript>
-<div id="brand"><i role="img" aria-label="Logo de TAL"></i><b>TAL</b><span>Traduction Africaine des Langues</span><small id="ver" style="margin-left:auto;color:var(--mut);font-size:.65rem">v38</small></div>
+<div id="brand"><i role="img" aria-label="Logo de TAL"></i><b>TAL</b><span>Traduction Africaine des Langues</span><small id="ver" style="margin-left:auto;color:var(--mut);font-size:.65rem">v39</small></div>
 <div id="inst" hidden><span id="instMsg"></span><button id="instGo" type="button">Installer</button><button id="instX" type="button" aria-label="Fermer">✕</button></div>
 <nav role="tablist" aria-label="Rubriques">
  <button role="tab" id="tb-c" data-v="vc" aria-selected="true">🎙️ Causerie</button>
@@ -472,6 +472,14 @@ function splitSenses(m){var out=[],cur="",dp=0,s=String(m);
   cur+=c}
  out.push(cur);
  return out.map(function(z){var mm=z.match(/^(.*?)\s*[(\[]([^)\]]*)[)\]]\s*$/);return mm?{d:mm[1].trim(),cues:mm[2]}:{d:z.trim(),cues:""}}).filter(function(z){return z.d})}
+// Accord en genre en français : « kewou moto » → « nouvelle moto » (adjectif à côté d'un nom féminin connu)
+var ADJF={nouveau:"nouvelle",beau:"belle",vieux:"vieille",joli:"jolie",grand:"grande",petit:"petite",bon:"bonne",mauvais:"mauvaise",gros:"grosse",blanc:"blanche",noir:"noire",cher:"chère",fou:"folle",content:"contente",fatigué:"fatiguée",fort:"forte",lourd:"lourde",long:"longue",heureux:"heureuse",paresseux:"paresseuse",gentil:"gentille",méchant:"méchante",propre:"propre",sale:"sale",neuf:"neuve",premier:"première",dernier:"dernière",malade:"malade",pauvre:"pauvre",riche:"riche",chaud:"chaude",froid:"froide",plein:"pleine",prêt:"prête",seul:"seule",cassé:"cassée",fermé:"fermée",ouvert:"ouverte"},
+ NOMF="moto,voiture,maison,femme,fille,route,école,ville,chose,nourriture,bouteille,chaise,table,porte,robe,chemise,chaussure,boutique,banque,radio,télé,télévision,machine,bière,eau,chambre,cuisine,rue,classe,journée,nuit,semaine,année,heure,fête,histoire,vie,mère,sœur,copine,amie,go,tante,grand-mère,cousine,voisine,patronne,maîtresse,directrice,infirmière,cliente,commerçante,clé,bouche,main,tête,jambe,dent,peau,somme,fête,pluie,terre,fenêtre,sauce,banane,mangue,igname,tomate,poule,vache,chèvre,pirogue,pharmacie,église,mosquée,plantation,cour,pièce,place,gare,monnaie,carte,lettre,photo,musique,chanson,danse,affaire,question,réponse,réunion,idée,parole,langue,tenue,coiffure,moto-taxi".split(","),
+ NOMFSET={};NOMF.forEach(function(w){NOMFSET[w]=1});
+function accordFr(res){var lw=function(z){var a=String(z).toLowerCase().split(" ");return a[a.length-1]},fw=function(z){return String(z).toLowerCase().split(" ")[0]};
+ for(var i=0;i<res.length;i++){var k=fw(res[i]);if(!ADJF[k]||String(res[i]).split(" ").length>1)continue;
+  var fem=(i+1<res.length&&NOMFSET[fw(res[i+1])])||(i>0&&NOMFSET[lw(res[i-1])]);
+  if(fem){var f=ADJF[k],r=String(res[i]);res[i]=(r[0]!==r[0].toLowerCase()?f[0].toUpperCase()+f.slice(1):f)}}}
 function wforms(w){return String(w).split(";").map(function(z){return z.trim()}).filter(Boolean)}
 function w1(w){return wforms(w)[0]||String(w)}
 function senses(x){return /[(\[;]/.test(x.meaning)?splitSenses(x.meaning):[{d:x.meaning,cues:""}]}
@@ -696,7 +704,7 @@ function dictSub(txt,f,t){
  if(Gf&&t[1]==="fr"&&tenseLoc(out,meta,Gf)){marks=[];meta.forEach(function(m,ix){if(m.inf)marks.push(ix)})}
  if(G&&f[1]==="fr")tenseRev(out,meta,G);
  marks.forEach(function(ix){out[ix]=conjFix(out,ix)});
- var res=[];out.forEach(function(w){if(!w)return;if(!res.length||nk(res[res.length-1])!==nk(w))res.push(w)});
+ var res=[];out.forEach(function(w){if(!w)return;if(!res.length||nk(res[res.length-1])!==nk(w))res.push(w)});if(t[1]==="fr")accordFr(res);
  return {text:res.join(" ").replace(/(^|\s)([jJnN])' /g,"$1$2’"),hit:hit,amb:amb}}
 async function mt(txt,f,t){var res=await fetch("https://api.mymemory.translated.net/get?q="+encodeURIComponent(txt)+"&langpair="+f[1]+"|"+t[1]),j=await res.json();
  if(j&&j.responseStatus==200&&j.responseData&&j.responseData.translatedText)return j.responseData.translatedText;
